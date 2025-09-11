@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  incomingLetters IncomingLetter[]
+  outgoingLetters OutgoingLetter[]
+
+  @@map("users")
+}
+
+model IncomingLetter {
+  id          String       @id @default(cuid())
+  letterNumber String      @unique
+  subject     String
+  sender      String
+  receivedDate DateTime
+  category    LetterCategory @default(GENERAL)
+  description String?
+  fileName    String?
+  filePath    String?
+  isInvitation Boolean    @default(false)
+  eventDate   DateTime?
+  eventLocation String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  // Relations
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+
+  @@map("incoming_letters")
+}
+
+model OutgoingLetter {
+  id          String       @id @default(cuid())
+  letterNumber String      @unique
+  subject     String
+  recipient   String
+  sentDate    DateTime
+  category    LetterCategory @default(GENERAL)
+  description String?
+  fileName    String?
+  filePath    String?
+  isInvitation Boolean    @default(false)
+  eventDate   DateTime?
+  eventLocation String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  // Relations
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+
+  @@map("outgoing_letters")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      NotificationType @default(INFO)
+  isRead    Boolean  @default(false)
+  userId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notifications")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum LetterCategory {
+  GENERAL
+  INVITATION
+  OFFICIAL
+  ANNOUNCEMENT
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  SUCCESS
+  ERROR
+}
