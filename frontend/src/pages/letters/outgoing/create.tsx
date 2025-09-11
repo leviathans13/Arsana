@@ -34,6 +34,12 @@ export default function CreateOutgoingLetterPage() {
     try {
       const formData = {
         ...data,
+        // Convert datetime-local input to ISO string
+        sentDate: new Date(data.sentDate).toISOString(),
+        // Convert event date if it exists
+        eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : undefined,
+        // Convert checkbox string to boolean
+        isInvitation: Boolean(data.isInvitation),
         file: selectedFile || undefined,
       };
 

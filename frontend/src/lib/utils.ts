@@ -34,7 +34,7 @@ export function createFormData(data: Record<string, any>): FormData {
       } else if (typeof value === 'boolean') {
         formData.append(key, value.toString());
       } else {
-        formData.append(key, value);
+        formData.append(key, String(value));
       }
     }
   });

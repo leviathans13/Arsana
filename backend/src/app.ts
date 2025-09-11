@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -20,7 +20,7 @@ import { notFoundHandler } from './middleware/notFoundHandler';
 // Import services
 import { startCronJobs } from './services/cronService';
 
-const app = express();
+const app: Express = express();
 const prisma = new PrismaClient();
 
 // Security middleware
