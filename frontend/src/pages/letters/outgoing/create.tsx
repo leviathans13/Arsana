@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Upload, Calendar, X } from 'lucide-react';
+import { ArrowLeft, Upload, Calendar, X, Send } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreateOutgoingLetter } from '@/hooks/useApi';
 import Layout from '@/components/Layout/Layout';
 import Link from 'next/link';
 import { CreateOutgoingLetterRequest } from '@/types';
+import { toast } from 'react-hot-toast';
 
 export default function CreateOutgoingLetterPage() {
   const router = useRouter();
@@ -32,21 +33,28 @@ export default function CreateOutgoingLetterPage() {
 
   const onSubmit = async (data: CreateOutgoingLetterRequest) => {
     try {
+      // Proper data formatting for backend
       const formData = {
         ...data,
-        // Convert datetime-local input to ISO string
+        // Ensure dates are properly formatted as ISO strings
         sentDate: new Date(data.sentDate).toISOString(),
-        // Convert event date if it exists
         eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : undefined,
-        // Convert checkbox string to boolean
+        // Ensure boolean conversion
         isInvitation: Boolean(data.isInvitation),
+        // Handle optional fields
+        description: data.description || undefined,
+        eventLocation: data.eventLocation || undefined,
+        // Set default category if not provided
+        category: data.category || 'GENERAL',
         file: selectedFile || undefined,
       };
 
       await createLetterMutation.mutateAsync(formData);
+      toast.success('Surat keluar berhasil ditambahkan!');
       router.push('/letters/outgoing');
     } catch (error) {
       console.error('Failed to create letter:', error);
+      toast.error('Gagal membuat surat keluar. Silakan coba lagi.');
     }
   };
 
