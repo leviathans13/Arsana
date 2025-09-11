@@ -5,39 +5,75 @@
 @layer base {
   html,
   body {
-    @apply h-full;
+    @apply h-full bg-gray-50 text-gray-900;
   }
   
   #__next {
     @apply h-full;
   }
+
+  * {
+    @apply transition-colors duration-200;
+  }
 }
 
 @layer components {
+  /* Button Styles */
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200;
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:transform active:scale-95;
   }
   
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500 shadow-soft hover:shadow-card;
   }
   
   .btn-secondary {
-    @apply bg-gray-200 text-gray-900 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2;
+    @apply bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-gray-500 shadow-soft hover:shadow-card;
+  }
+  
+  .btn-success {
+    @apply bg-success-600 text-white hover:bg-success-700 focus:ring-success-500 shadow-soft hover:shadow-card;
+  }
+  
+  .btn-warning {
+    @apply bg-warning-600 text-white hover:bg-warning-700 focus:ring-warning-500 shadow-soft hover:shadow-card;
   }
   
   .btn-danger {
-    @apply bg-red-600 text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+    @apply bg-danger-600 text-white hover:bg-danger-700 focus:ring-danger-500 shadow-soft hover:shadow-card;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3 text-base;
   }
   
+  /* Input Styles */
   .input {
-    @apply block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500;
+    @apply block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 shadow-soft focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 transition-all duration-200;
+  }
+
+  .input:focus {
+    @apply shadow-card;
+  }
+
+  .input-error {
+    @apply border-danger-300 focus:border-danger-500 focus:ring-danger-500;
   }
   
+  /* Card Styles */
   .card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden;
+    @apply bg-white rounded-lg shadow-card border border-gray-200 overflow-hidden transition-shadow duration-200 hover:shadow-elevated;
+  }
+
+  .card-interactive {
+    @apply cursor-pointer transform hover:scale-[1.02] transition-all duration-200;
   }
   
+  /* Badge Styles */
   .badge {
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
@@ -47,18 +83,80 @@
   }
   
   .badge-success {
-    @apply bg-green-100 text-green-800;
+    @apply bg-success-100 text-success-800;
   }
   
   .badge-warning {
-    @apply bg-yellow-100 text-yellow-800;
+    @apply bg-warning-100 text-warning-800;
   }
   
   .badge-danger {
-    @apply bg-red-100 text-red-800;
+    @apply bg-danger-100 text-danger-800;
   }
   
   .badge-info {
     @apply bg-blue-100 text-blue-800;
+  }
+
+  .badge-gray {
+    @apply bg-gray-100 text-gray-800;
+  }
+
+  /* Loading States */
+  .loading-spinner {
+    @apply animate-spin rounded-full border-2 border-gray-300 border-t-primary-600;
+  }
+
+  /* Form Groups */
+  .form-group {
+    @apply space-y-1;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-gray-700;
+  }
+
+  .form-label-required::after {
+    content: ' *';
+    @apply text-danger-500;
+  }
+
+  .form-error {
+    @apply mt-1 text-sm text-danger-600;
+  }
+
+  /* Statistics Cards */
+  .stat-card {
+    @apply card p-6 card-interactive;
+  }
+
+  /* Navigation */
+  .nav-item {
+    @apply flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200;
+  }
+
+  .nav-item-active {
+    @apply bg-primary-100 text-primary-700;
+  }
+
+  .nav-item-inactive {
+    @apply text-gray-700 hover:bg-gray-100;
+  }
+
+  /* Layout utilities */
+  .container-main {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .section-header {
+    @apply mb-6;
+  }
+
+  .section-title {
+    @apply text-2xl font-bold text-gray-900 mb-2;
+  }
+
+  .section-description {
+    @apply text-gray-600;
   }
 }
