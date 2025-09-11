@@ -2,36 +2,133 @@ import { Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth';
+import { formatDate } from '../utils/helpers';
 import { upload } from './incomingLetter.controller';
 import fs from 'fs';
 
 const prisma = new PrismaClient();
 
 const outgoingLetterSchema = z.object({
-  letterNumber: z.string().min(1),
-  subject: z.string().min(1),
-  recipient: z.string().min(1),
-  sentDate: z.string().datetime(),
-  category: z.enum(['GENERAL', 'INVITATION', 'OFFICIAL', 'ANNOUNCEMENT']).default('GENERAL'),
-  description: z.string().optional(),
+  letterNumber: z.string()
+    .min(3, 'Nomor surat minimal 3 karakter')
+    .max(50, 'Nomor surat maksimal 50 karakter')
+    .regex(/^[A-Za-z0-9\-\/]+$/, 'Nomor surat hanya boleh berisi huruf, angka, tanda hubung, dan garis miring'),
+  subject: z.string()
+    .min(5, 'Subjek minimal 5 karakter')
+    .max(200, 'Subjek maksimal 200 karakter'),
+  recipient: z.string()
+    .min(2, 'Nama penerima minimal 2 karakter')
+    .max(100, 'Nama penerima maksimal 100 karakter'),
+  sentDate: z.string()
+    .datetime('Format tanggal tidak valid')
+    .refine((date) => {
+      const sentDate = new Date(date);
+      const now = new Date();
+      return sentDate <= now;
+    }, 'Tanggal kirim tidak boleh di masa depan'),
+  category: z.enum(['GENERAL', 'INVITATION', 'OFFICIAL', 'ANNOUNCEMENT'], {
+    errorMap: () => ({ message: 'Kategori tidak valid' })
+  }).default('GENERAL'),
+  description: z.string()
+    .max(1000, 'Deskripsi maksimal 1000 karakter')
+    .optional()
+    .nullable(),
   isInvitation: z.boolean().default(false),
-  eventDate: z.string().datetime().optional(),
-  eventLocation: z.string().optional()
+  eventDate: z.string()
+    .datetime('Format tanggal acara tidak valid')
+    .optional()
+    .nullable(),
+  eventLocation: z.string()
+    .max(200, 'Lokasi acara maksimal 200 karakter')
+    .optional()
+    .nullable()
+}).refine((data) => {
+  // If it's an invitation, eventDate is required
+  if (data.isInvitation && !data.eventDate) {
+    return false;
+  }
+  // If eventDate is provided and sentDate exists, eventDate must be after sentDate
+  if (data.eventDate && data.sentDate) {
+    const eventDate = new Date(data.eventDate);
+    const sentDate = new Date(data.sentDate);
+    return eventDate > sentDate;
+  }
+  return true;
+}, {
+  message: 'Untuk undangan, tanggal acara wajib diisi dan harus setelah tanggal kirim',
+  path: ['eventDate']
+});
+
+const updateOutgoingLetterSchema = z.object({
+  letterNumber: z.string()
+    .min(3, 'Nomor surat minimal 3 karakter')
+    .max(50, 'Nomor surat maksimal 50 karakter')
+    .regex(/^[A-Za-z0-9\-\/]+$/, 'Nomor surat hanya boleh berisi huruf, angka, tanda hubung, dan garis miring')
+    .optional(),
+  subject: z.string()
+    .min(5, 'Subjek minimal 5 karakter')
+    .max(200, 'Subjek maksimal 200 karakter')
+    .optional(),
+  recipient: z.string()
+    .min(2, 'Nama penerima minimal 2 karakter')
+    .max(100, 'Nama penerima maksimal 100 karakter')
+    .optional(),
+  sentDate: z.string()
+    .datetime('Format tanggal tidak valid')
+    .optional(),
+  category: z.enum(['GENERAL', 'INVITATION', 'OFFICIAL', 'ANNOUNCEMENT'])
+    .optional(),
+  description: z.string()
+    .max(1000, 'Deskripsi maksimal 1000 karakter')
+    .optional()
+    .nullable(),
+  isInvitation: z.boolean().optional(),
+  eventDate: z.string()
+    .datetime('Format tanggal acara tidak valid')
+    .optional()
+    .nullable(),
+  eventLocation: z.string()
+    .max(200, 'Lokasi acara maksimal 200 karakter')
+    .optional()
+    .nullable()
 });
 
 export const createOutgoingLetter = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
+    // Parse and validate input data
     const data = outgoingLetterSchema.parse(req.body);
     
+    // Check for duplicate letter number
+    const existingLetter = await prisma.outgoingLetter.findFirst({
+      where: {
+        letterNumber: data.letterNumber
+      }
+    });
+    
+    if (existingLetter) {
+      res.status(400).json({ 
+        error: 'Nomor surat sudah digunakan', 
+        details: [{ 
+          field: 'letterNumber', 
+          message: 'Nomor surat sudah ada dalam sistem' 
+        }] 
+      });
+      return;
+    }
+
+    // Prepare letter data
     const letterData = {
       ...data,
       sentDate: new Date(data.sentDate),
       eventDate: data.eventDate ? new Date(data.eventDate) : null,
+      description: data.description || null,
+      eventLocation: data.eventLocation || null,
       userId: req.user!.userId,
       fileName: req.file?.originalname || null,
       filePath: req.file?.path || null
     };
 
+    // Create letter
     const letter = await prisma.outgoingLetter.create({
       data: letterData,
       include: {
@@ -45,14 +142,58 @@ export const createOutgoingLetter = async (req: AuthenticatedRequest, res: Respo
       }
     });
 
-    res.status(201).json(letter);
+    // Create notification for the created letter
+    if (data.isInvitation && data.eventDate) {
+      const eventDate = new Date(data.eventDate);
+      const daysBefore = Math.ceil((eventDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+      
+      if (daysBefore > 0 && daysBefore <= 30) {
+        await prisma.notification.create({
+          data: {
+            title: 'Pengingat Acara',
+            message: `Anda mengirim undangan "${data.subject}" untuk acara pada tanggal ${formatDate(eventDate)}`,
+            type: 'INFO',
+            userId: req.user!.userId
+          }
+        });
+      }
+    }
+
+    res.status(201).json({
+      message: 'Surat keluar berhasil dibuat',
+      data: letter
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Invalid input data', details: error.errors });
+      const formattedErrors = error.errors.map(err => ({
+        field: err.path.join('.'),
+        message: err.message
+      }));
+      
+      res.status(400).json({ 
+        error: 'Data yang dimasukkan tidak valid', 
+        details: formattedErrors 
+      });
       return;
     }
+    
+    // Handle Prisma unique constraint errors
+    if ((error as any).code === 'P2002') {
+      res.status(400).json({ 
+        error: 'Data sudah ada dalam sistem', 
+        details: [{ 
+          field: (error as any).meta?.target?.[0] || 'unknown', 
+          message: 'Data dengan nilai tersebut sudah ada' 
+        }] 
+      });
+      return;
+    }
+    
     console.error('Create outgoing letter error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Terjadi kesalahan pada server', 
+      message: 'Silakan coba lagi nanti' 
+    });
   }
 };
 
@@ -145,7 +286,7 @@ export const getOutgoingLetterById = async (req: AuthenticatedRequest, res: Resp
 export const updateOutgoingLetter = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const data = outgoingLetterSchema.partial().parse(req.body);
+    const data = updateOutgoingLetterSchema.parse(req.body);
 
     const existingLetter = await prisma.outgoingLetter.findUnique({
       where: { id }
