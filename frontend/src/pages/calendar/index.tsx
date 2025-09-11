@@ -1,74 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
-import { Calendar as CalendarIcon, MapPin, Clock, FileText, Send } from 'lucide-react';
+import {
+  Calendar as CalendarIcon,
+  MapPin,
+  Clock,
+  FileText,
+  Send,
+  PlusCircle,
+  Filter,
+} from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useCalendarEvents, useUpcomingEvents } from '@/hooks/useApi';
+import { useCalendarEvents } from '@/hooks/useApi';
 import Layout from '@/components/Layout/Layout';
-import { formatDate, formatDateTime } from '@/lib/utils';
-import { CalendarEvent } from '@/types';
+import { formatDateTime } from '@/lib/utils';
+import type { CalendarEvent } from '@/types';
 
-const EventCard: React.FC<{ event: CalendarEvent }> = ({ event }) => {
-  const typeIcon = event.type === 'incoming' ? FileText : Send;
-  const typeColor = event.type === 'incoming' ? 'text-blue-600' : 'text-green-600';
-  const typeBg = event.type === 'incoming' ? 'bg-blue-50' : 'bg-green-50';
-  
-  return (
-    <div className={`card p-4 border-l-4 ${event.type === 'incoming' ? 'border-blue-500' : 'border-green-500'}`}>
-      <div className="flex items-start space-x-3">
-        <div className={`flex-shrink-0 p-2 rounded-lg ${typeBg}`}>
-          {React.createElement(typeIcon, { className: `h-4 w-4 ${typeColor}` })}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-gray-900 truncate">
-            {event.title}
-          </h3>
-          <div className="mt-1 flex items-center text-xs text-gray-500">
-            <span className="badge badge-primary mr-2">
-              {event.letterNumber}
-            </span>
-            <span className={`badge ${event.type === 'incoming' ? 'badge-info' : 'badge-success'}`}>
-              {event.type === 'incoming' ? 'Surat Masuk' : 'Surat Keluar'}
-            </span>
-          </div>
-          <div className="mt-2 flex items-center space-x-4 text-xs text-gray-500">
-            <div className="flex items-center">
-              <Clock className="h-3 w-3 mr-1" />
-              {formatDateTime(event.date)}
-            </div>
-            {event.location && (
-              <div className="flex items-center">
-                <MapPin className="h-3 w-3 mr-1" />
-                {event.location}
-              </div>
-            )}
-          </div>
-          {event.description && (
-            <p className="mt-2 text-xs text-gray-600 line-clamp-2">
-              {event.description}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
+// Plugins
+import dayGridPlugin from '@fullcalendar/daygrid';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import listPlugin from '@fullcalendar/list';
+import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
+import idLocale from '@fullcalendar/core/locales/id';
+import type {
+  EventClickArg,
+  EventContentArg,
+  EventMountArg,
+  DatesSetArg,
+} from '@fullcalendar/core';
+
+// SSR-safe import untuk komponen
+const FullCalendar = dynamic(() => import('@fullcalendar/react'), { ssr: false });
+
+type FilterType = 'all' | 'incoming' | 'outgoing';
+
+function getInitialRange() {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return {
+    start: startOfMonth.toISOString(),
+    end: endOfMonth.toISOString(),
+  };
+}
 
 export default function CalendarPage() {
   const router = useRouter();
   const { isAuthenticated, loading } = useAuth();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [viewType, setViewType] = useState<'month' | 'upcoming'>('upcoming');
+  
+  // State yang konsisten - tidak kondisional
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [newEventDate, setNewEventDate] = useState<string | null>(null);
+  const [range, setRange] = useState(getInitialRange);
 
-  // Get date range for current month
-  const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-
+  // Hook untuk data - selalu dipanggil
   const { data: calendarData } = useCalendarEvents({
-    start: startOfMonth.toISOString(),
-    end: endOfMonth.toISOString(),
+    start: range.start,
+    end: range.end,
   });
-
-  const { data: upcomingData } = useUpcomingEvents({ limit: 20 });
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -76,10 +66,14 @@ export default function CalendarPage() {
     }
   }, [isAuthenticated, loading, router]);
 
+  // Jika loading atau tidak authenticated, return early SETELAH semua hooks dipanggil
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-sm text-gray-600">Memuat kalender...</p>
+        </div>
       </div>
     );
   }
@@ -88,175 +82,289 @@ export default function CalendarPage() {
     return null;
   }
 
-  const events = viewType === 'month' ? calendarData?.events || [] : upcomingData?.events || [];
+  const allEvents: CalendarEvent[] = calendarData?.events || [];
 
-  // Group events by date for upcoming view
-  const groupedEvents = events.reduce((acc: Record<string, CalendarEvent[]>, event: CalendarEvent) => {
-    const dateKey = formatDate(event.date);
-    if (!acc[dateKey]) {
-      acc[dateKey] = [];
-    }
-    acc[dateKey].push(event);
-    return acc;
-  }, {} as Record<string, CalendarEvent[]>);
+  const filteredEvents = useMemo(() => {
+    if (filter === 'all') return allEvents;
+    return allEvents.filter((e) => e.type === filter);
+  }, [allEvents, filter]);
 
-  const navigateMonth = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate);
-    if (direction === 'prev') {
-      newDate.setMonth(newDate.getMonth() - 1);
-    } else {
-      newDate.setMonth(newDate.getMonth() + 1);
-    }
-    setCurrentDate(newDate);
-  };
+  // Mapping event ke format FullCalendar
+  const mappedEvents = useMemo(
+    () =>
+      filteredEvents.map((e) => {
+        const isIncoming = e.type === 'incoming';
+        return {
+          id: String(e.id),
+          title: e.title,
+          start: e.date, // ISO string
+          allDay: false,
+          extendedProps: {
+            original: e,
+          },
+          classNames: [
+            'rounded-md',
+            'border',
+            'px-1.5',
+            isIncoming
+              ? 'bg-blue-50 border-blue-200 text-blue-800'
+              : 'bg-green-50 border-green-200 text-green-800',
+          ],
+        };
+      }),
+    [filteredEvents]
+  );
 
-  const monthNames = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-  ];
+  // Interaksi
+  const onEventClick = useCallback((arg: EventClickArg) => {
+    const data = arg.event.extendedProps?.original as CalendarEvent | undefined;
+    if (!data) return;
+    const path =
+      data.type === 'incoming'
+        ? `/letters/incoming/${data.id}`
+        : `/letters/outgoing/${data.id}`;
+    router.push(path);
+  }, [router]);
 
-  return (
-    <Layout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              <CalendarIcon className="inline h-8 w-8 mr-2" />
-              Kalender Acara
-            </h1>
-            <p className="text-gray-600">Lihat semua acara dari undangan masuk dan keluar</p>
-          </div>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setViewType('upcoming')}
-              className={`btn text-sm ${viewType === 'upcoming' ? 'btn-primary' : 'btn-secondary'}`}
-            >
-              Acara Mendatang
-            </button>
-            <button
-              onClick={() => setViewType('month')}
-              className={`btn text-sm ${viewType === 'month' ? 'btn-primary' : 'btn-secondary'}`}
-            >
-              Bulanan
-            </button>
-          </div>
+  const onDateClick = useCallback((arg: DateClickArg) => {
+    setNewEventDate(arg.dateStr);
+  }, []);
+
+  const eventDidMount = useCallback((arg: EventMountArg) => {
+    const data = arg.event.extendedProps?.original as CalendarEvent | undefined;
+    if (!data) return;
+    const detail = [
+      data.letterNumber ? `No: ${data.letterNumber}` : '',
+      data.location ? `Lokasi: ${data.location}` : '',
+      data.date ? `Waktu: ${formatDateTime(data.date)}` : '',
+      data.type ? `Tipe: ${data.type === 'incoming' ? 'Surat Masuk' : 'Surat Keluar'}` : '',
+      data.description ? `${data.description}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+    arg.el.setAttribute('title', detail);
+  }, []);
+
+  const eventContent = useCallback((arg: EventContentArg) => {
+    const data = arg.event.extendedProps?.original as CalendarEvent | undefined;
+    if (!data) return <>{arg.timeText} {arg.event.title}</>;
+    const isIncoming = data.type === 'incoming';
+    return (
+      <div className="flex flex-col gap-0.5">
+        <div className="flex items-center gap-1.5 text-[11px] leading-none">
+          <span
+            className={`inline-flex items-center px-1.5 py-0.5 rounded ${
+              isIncoming ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+            }`}
+          >
+            {isIncoming ? 'Masuk' : 'Keluar'}
+          </span>
+          {data.letterNumber && <span className="text-gray-500">#{data.letterNumber}</span>}
         </div>
-
-        {/* Month Navigation (only for month view) */}
-        {viewType === 'month' && (
-          <div className="card p-4">
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => navigateMonth('prev')}
-                className="btn btn-secondary text-sm"
-              >
-                ← Bulan Sebelumnya
-              </button>
-              <h2 className="text-lg font-semibold text-gray-900">
-                {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-              </h2>
-              <button
-                onClick={() => navigateMonth('next')}
-                className="btn btn-secondary text-sm"
-              >
-                Bulan Berikutnya →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Events Display */}
-        {events.length > 0 ? (
-          <div className="space-y-6">
-            {viewType === 'upcoming' ? (
-              // Upcoming view - grouped by date
-              Object.entries(groupedEvents).map(([date, dateEvents]) => (
-                <div key={date} className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                    <CalendarIcon className="h-5 w-5 mr-2" />
-                    {date}
-                    <span className="ml-2 text-sm font-normal text-gray-500">
-                      ({(dateEvents as CalendarEvent[]).length} acara)
-                    </span>
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(dateEvents as CalendarEvent[]).map((event) => (
-                      <EventCard key={event.id} event={event} />
-                    ))}
-                  </div>
-                </div>
-              ))
-            ) : (
-              // Month view - all events in grid
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Acara di {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                  <span className="ml-2 text-sm font-normal text-gray-500">
-                    ({events.length} acara)
-                  </span>
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {events.map((event: CalendarEvent) => (
-                    <EventCard key={event.id} event={event} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="card p-12 text-center">
-            <CalendarIcon className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Tidak ada acara
-            </h3>
-            <p className="text-gray-500 mb-6">
-              {viewType === 'month' 
-                ? `Tidak ada acara terjadwal untuk ${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`
-                : 'Belum ada acara yang akan datang'
-              }
-            </p>
-            <div className="space-x-4">
-              <button
-                onClick={() => router.push('/letters/incoming/create')}
-                className="btn btn-primary"
-              >
-                Tambah Surat Masuk
-              </button>
-              <button
-                onClick={() => router.push('/letters/outgoing/create')}
-                className="btn btn-secondary"
-              >
-                Tambah Surat Keluar
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Quick Stats */}
-        {events.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="card p-4 text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {events.filter((e: CalendarEvent) => e.type === 'incoming').length}
-              </div>
-              <div className="text-sm text-gray-600">Acara dari Surat Masuk</div>
-            </div>
-            <div className="card p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {events.filter((e: CalendarEvent) => e.type === 'outgoing').length}
-              </div>
-              <div className="text-sm text-gray-600">Acara dari Surat Keluar</div>
-            </div>
-            <div className="card p-4 text-center">
-              <div className="text-2xl font-bold text-purple-600">
-                {events.length}
-              </div>
-              <div className="text-sm text-gray-600">Total Acara</div>
-            </div>
+        <div className="text-[12px] font-medium truncate">{arg.event.title}</div>
+        {data.location && (
+          <div className="flex items-center gap-1 text-[11px] text-gray-600 truncate">
+            <MapPin className="h-3 w-3" />
+            <span className="truncate">{data.location}</span>
           </div>
         )}
       </div>
+    );
+  }, []);
+
+  // Fix untuk infinite loop - gunakan useCallback dengan dependency yang tepat
+  const onDatesSet = useCallback((arg: DatesSetArg) => {
+    // Hanya update jika range benar-benar berubah
+    setRange(prev => {
+      if (prev.start === arg.startStr && prev.end === arg.endStr) {
+        return prev; // Tidak ada perubahan, return state lama
+      }
+      return { start: arg.startStr, end: arg.endStr };
+    });
+  }, []);
+
+  const stats = useMemo(() => {
+    const incoming = allEvents.filter((e) => e.type === 'incoming').length;
+    const outgoing = allEvents.filter((e) => e.type === 'outgoing').length;
+    return { incoming, outgoing, total: allEvents.length };
+  }, [allEvents]);
+
+  return (
+    <Layout>
+      {/* Inject CSS FullCalendar via CDN */}
+      <Head>
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.css"
+        />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@fullcalendar/timegrid@6.1.15/index.global.min.css"
+        />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@fullcalendar/list@6.1.15/index.global.min.css"
+        />
+      </Head>
+
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-sm p-5">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center">
+              <div className="bg-primary-100 p-3 rounded-lg mr-3">
+                <CalendarIcon className="h-6 w-6 text-primary-600" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Kalender Acara</h1>
+                <p className="text-gray-600 text-sm">
+                  Lihat acara dari surat masuk dan surat keluar
+                </p>
+              </div>
+            </div>
+
+            {/* Filter */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg p-1">
+                <span className="px-2 py-1 text-xs text-gray-500 flex items-center gap-1">
+                  <Filter className="h-3.5 w-3.5" /> Filter
+                </span>
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    filter === 'all' ? 'bg-gray-800 text-white' : 'hover:bg-white text-gray-700'
+                  }`}
+                >
+                  Semua
+                </button>
+                <button
+                  onClick={() => setFilter('incoming')}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    filter === 'incoming' ? 'bg-blue-600 text-white' : 'hover:bg-white text-gray-700'
+                  }`}
+                >
+                  Masuk
+                </button>
+                <button
+                  onClick={() => setFilter('outgoing')}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    filter === 'outgoing' ? 'bg-green-600 text-white' : 'hover:bg-white text-gray-700'
+                  }`}
+                >
+                  Keluar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Calendar */}
+        <div className="bg-white rounded-xl shadow-sm p-3 md:p-5">
+          <FullCalendar
+            headerToolbar={{
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek',
+            }}
+            plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
+            locales={[idLocale]}
+            locale="id"
+            events={mappedEvents as any}
+            eventClick={onEventClick}
+            dateClick={onDateClick}
+            eventDidMount={eventDidMount}
+            eventContent={eventContent}
+            datesSet={onDatesSet}
+            selectable={true}
+            dayMaxEventRows={3}
+            height="auto"
+            aspectRatio={1.65}
+            slotMinTime="06:00:00"
+            slotMaxTime="21:00:00"
+            expandRows={true}
+            nowIndicator={true}
+            displayEventTime={true}
+          />
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl shadow-sm p-5 flex items-center">
+            <div className="p-3 bg-blue-50 rounded-lg mr-4">
+              <FileText className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-blue-600">{stats.incoming}</div>
+              <div className="text-sm text-gray-600">Acara dari Surat Masuk</div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-5 flex items-center">
+            <div className="p-3 bg-green-50 rounded-lg mr-4">
+              <Send className="h-6 w-6 text-green-600" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-green-600">{stats.outgoing}</div>
+              <div className="text-sm text-gray-600">Acara dari Surat Keluar</div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm p-5 flex items-center">
+            <div className="p-3 bg-purple-50 rounded-lg mr-4">
+              <CalendarIcon className="h-6 w-6 text-purple-600" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-purple-600">{stats.total}</div>
+              <div className="text-sm text-gray-600">Total Acara</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Add Modal */}
+      {newEventDate && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/50 p-4">
+          <div className="bg-white w-full max-w-md rounded-xl shadow-xl p-6">
+            <div className="flex items-center mb-3">
+              <div className="p-2 bg-primary-100 rounded-md mr-2">
+                <PlusCircle className="h-5 w-5 text-primary-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Tambah acara pada {newEventDate}
+              </h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-5">
+              Pilih jenis surat untuk membuat acara pada tanggal ini.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                onClick={() =>
+                  router.push(`/letters/incoming/create?date=${encodeURIComponent(newEventDate)}`)
+                }
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
+              >
+                <FileText className="h-4 w-4" />
+                Surat Masuk
+              </button>
+              <button
+                onClick={() =>
+                  router.push(`/letters/outgoing/create?date=${encodeURIComponent(newEventDate)}`)
+                }
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 transition"
+              >
+                <Send className="h-4 w-4" />
+                Surat Keluar
+              </button>
+            </div>
+            <div className="mt-4 text-right">
+              <button
+                onClick={() => setNewEventDate(null)}
+                className="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 bg-white text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

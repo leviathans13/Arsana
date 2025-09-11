@@ -121,11 +121,7 @@ export default function DashboardPage() {
             icon={FileText}
             color="bg-gradient-to-br from-blue-500 to-blue-600"
             href="/letters/incoming"
-            trend={{
-              value: 12,
-              label: 'vs bulan lalu',
-              isPositive: true
-            }}
+            
           />
           <StatCard
             title="Total Surat Keluar"
@@ -133,11 +129,7 @@ export default function DashboardPage() {
             icon={Send}
             color="bg-gradient-to-br from-success-500 to-success-600"
             href="/letters/outgoing"
-            trend={{
-              value: 8,
-              label: 'vs bulan lalu',
-              isPositive: true
-            }}
+            
           />
           <StatCard
             title="Acara Mendatang"
@@ -145,11 +137,7 @@ export default function DashboardPage() {
             icon={Calendar}
             color="bg-gradient-to-br from-purple-500 to-purple-600"
             href="/calendar"
-            trend={{
-              value: 3,
-              label: 'acara minggu ini',
-              isPositive: true
-            }}
+            
           />
           <StatCard
             title="Notifikasi Baru"

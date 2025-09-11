@@ -30,7 +30,7 @@ export const upload = multer({
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /pdf|doc|docx|jpg|jpeg|png/;
+    const allowedTypes = /pdf|doc|docx/;
     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     const mimetype = allowedTypes.test(file.mimetype);
     
@@ -41,6 +41,16 @@ export const upload = multer({
     }
   }
 });
+
+// Helper untuk koersi boolean dari multipart/form-data
+const toBoolean = (val: unknown) => {
+  if (typeof val === 'string') {
+    const v = val.trim().toLowerCase();
+    if (['true', '1', 'on', 'yes'].includes(v)) return true;
+    if (['false', '0', 'off', 'no', ''].includes(v)) return false;
+  }
+  return val;
+};
 
 const incomingLetterSchema = z.object({
   letterNumber: z.string()
@@ -67,7 +77,8 @@ const incomingLetterSchema = z.object({
     .max(1000, 'Deskripsi maksimal 1000 karakter')
     .optional()
     .nullable(),
-  isInvitation: z.boolean().default(false),
+  // Perbaikan: koersi boolean
+  isInvitation: z.preprocess(toBoolean, z.boolean()).default(false),
   eventDate: z.string()
     .datetime('Format tanggal acara tidak valid')
     .optional()
@@ -116,7 +127,8 @@ const updateIncomingLetterSchema = z.object({
     .max(1000, 'Deskripsi maksimal 1000 karakter')
     .optional()
     .nullable(),
-  isInvitation: z.boolean().optional(),
+  // Perbaikan: koersi boolean
+  isInvitation: z.preprocess(toBoolean, z.boolean()).optional(),
   eventDate: z.string()
     .datetime('Format tanggal acara tidak valid')
     .optional()

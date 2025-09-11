@@ -8,6 +8,16 @@ import fs from 'fs';
 
 const prisma = new PrismaClient();
 
+// Helper untuk koersi boolean dari multipart/form-data
+const toBoolean = (val: unknown) => {
+  if (typeof val === 'string') {
+    const v = val.trim().toLowerCase();
+    if (['true', '1', 'on', 'yes'].includes(v)) return true;
+    if (['false', '0', 'off', 'no', ''].includes(v)) return false;
+  }
+  return val;
+};
+
 const outgoingLetterSchema = z.object({
   letterNumber: z.string()
     .min(3, 'Nomor surat minimal 3 karakter')
@@ -33,7 +43,8 @@ const outgoingLetterSchema = z.object({
     .max(1000, 'Deskripsi maksimal 1000 karakter')
     .optional()
     .nullable(),
-  isInvitation: z.boolean().default(false),
+  // Perbaikan: koersi boolean
+  isInvitation: z.preprocess(toBoolean, z.boolean()).default(false),
   eventDate: z.string()
     .datetime('Format tanggal acara tidak valid')
     .optional()
@@ -82,7 +93,8 @@ const updateOutgoingLetterSchema = z.object({
     .max(1000, 'Deskripsi maksimal 1000 karakter')
     .optional()
     .nullable(),
-  isInvitation: z.boolean().optional(),
+  // Perbaikan: koersi boolean
+  isInvitation: z.preprocess(toBoolean, z.boolean()).optional(),
   eventDate: z.string()
     .datetime('Format tanggal acara tidak valid')
     .optional()

@@ -212,9 +212,7 @@ export default function CreateOutgoingLetterPage() {
           <div className="card p-6">
             <div className="flex items-center mb-4">
               <input
-                {...register('isInvitation', {
-                  setValueAs: (value) => Boolean(value)
-                })}
+                {...register('isInvitation')}
                 type="checkbox"
                 id="isInvitation"
                 className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
