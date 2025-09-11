@@ -1,45 +1,29 @@
 import { Request, Response, NextFunction } from 'express';
-
-export interface CustomError extends Error {
-  statusCode?: number;
-  code?: string;
-}
+import { AppError, handleError, formatErrorResponse } from '../utils/errors';
 
 export const errorHandler = (
-  error: CustomError,
+  error: Error,
   req: Request,
   res: Response,
   next: NextFunction
 ): void => {
-  let statusCode = error.statusCode || 500;
-  let message = error.message || 'Internal Server Error';
+  const appError = handleError(error);
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
+  const response = formatErrorResponse(appError, isDevelopment);
 
-  // Prisma errors
-  if (error.code === 'P2002') {
-    statusCode = 400;
-    message = 'Resource already exists';
-  }
-
-  if (error.code === 'P2025') {
-    statusCode = 404;
-    message = 'Resource not found';
-  }
-
-  // JWT errors
-  if (error.name === 'JsonWebTokenError') {
-    statusCode = 401;
-    message = 'Invalid token';
-  }
-
-  if (error.name === 'TokenExpiredError') {
-    statusCode = 401;
-    message = 'Token expired';
-  }
-
-  console.error(`Error ${statusCode}: ${message}`, error);
-
-  res.status(statusCode).json({
-    error: message,
-    ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+  // Log error details
+  console.error(`Error ${appError.statusCode}: ${appError.message}`, {
+    error: appError,
+    request: {
+      method: req.method,
+      url: req.url,
+      ip: req.ip,
+      userAgent: req.get('User-Agent'),
+      userId: (req as any).user?.userId,
+    },
+    stack: isDevelopment ? appError.stack : undefined,
   });
+
+  res.status(appError.statusCode).json(response);
 };
