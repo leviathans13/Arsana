@@ -91,13 +91,38 @@ export default function CalendarPage() {
 
   // Mapping event ke format FullCalendar
   const mappedEvents = useMemo(
-    () =>
-      filteredEvents.map((e) => {
+    () => {
+      // Group events by date to handle multiple events on the same day
+      const eventsByDate = new Map<string, CalendarEvent[]>();
+      filteredEvents.forEach(event => {
+        const dateKey = new Date(event.date).toDateString();
+        if (!eventsByDate.has(dateKey)) {
+          eventsByDate.set(dateKey, []);
+        }
+        eventsByDate.get(dateKey)!.push(event);
+      });
+
+      // Map events with time offsets for same-day events
+      return filteredEvents.map((e, index) => {
         const isIncoming = e.type === 'incoming';
+        const eventDate = new Date(e.date);
+        const dateKey = eventDate.toDateString();
+        const samedayEvents = eventsByDate.get(dateKey)!;
+        const eventIndex = samedayEvents.indexOf(e);
+        
+        // Add small time offset for events on the same day (15 minutes apart)
+        const adjustedDate = new Date(eventDate);
+        if (samedayEvents.length > 1) {
+          adjustedDate.setHours(9 + eventIndex, eventIndex * 15, 0, 0);
+        } else {
+          // For single events, set to 9:00 AM
+          adjustedDate.setHours(9, 0, 0, 0);
+        }
+        
         return {
           id: String(e.id),
           title: e.title,
-          start: e.date, // ISO string
+          start: adjustedDate.toISOString(),
           allDay: false,
           extendedProps: {
             original: e,
@@ -111,7 +136,8 @@ export default function CalendarPage() {
               : 'bg-green-50 border-green-200 text-green-800',
           ],
         };
-      }),
+      });
+    },
     [filteredEvents]
   );
 
@@ -276,7 +302,8 @@ export default function CalendarPage() {
             eventContent={eventContent}
             datesSet={onDatesSet}
             selectable={true}
-            dayMaxEventRows={3}
+            dayMaxEventRows={false}
+            moreLinkClick="popover"
             height="auto"
             aspectRatio={1.65}
             slotMinTime="06:00:00"
@@ -284,6 +311,7 @@ export default function CalendarPage() {
             expandRows={true}
             nowIndicator={true}
             displayEventTime={true}
+            eventDisplay="block"
           />
         </div>
 

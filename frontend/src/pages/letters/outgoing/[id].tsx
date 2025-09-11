@@ -81,9 +81,9 @@ export default function OutgoingLetterDetailPage() {
   };
 
   const handleDownload = () => {
-    if (letter?.filePath) {
+    if (letter?.id) {
       const link = document.createElement('a');
-      link.href = `/api/files/${letter.filePath}`;
+      link.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/files/outgoing/${letter.id}`;
       link.download = letter.fileName || 'document';
       document.body.appendChild(link);
       link.click();
@@ -156,7 +156,7 @@ export default function OutgoingLetterDetailPage() {
             </div>
             <div className="mt-4 flex md:mt-0 md:ml-4 space-x-2">
               <Link
-                href={`/letters/outgoing/${letter.id}/edit`}
+                href={`/letters/outgoing/edit/${letter.id}`}
                 className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
               >
                 <Edit className="h-4 w-4 mr-2" />

@@ -103,8 +103,10 @@ const checkUpcomingEvents = async () => {
       const title = 'Upcoming Event Reminder';
       const message = `Event "${letter.subject}" is scheduled for tomorrow at ${letter.eventLocation || 'TBA'}`;
       
-      await createNotification(title, message, 'INFO', letter.userId);
+      // Create global notification for all users
+      await createNotification(title, message, 'INFO');
       
+      // Still send email to the creator
       await sendEmailNotification(
         letter.user.email,
         title,
@@ -118,8 +120,10 @@ const checkUpcomingEvents = async () => {
       const title = 'Upcoming Event Reminder';
       const message = `Event "${letter.subject}" is scheduled for tomorrow at ${letter.eventLocation || 'TBA'}`;
       
-      await createNotification(title, message, 'INFO', letter.userId);
+      // Create global notification for all users
+      await createNotification(title, message, 'INFO');
       
+      // Still send email to the creator
       await sendEmailNotification(
         letter.user.email,
         title,
