@@ -188,7 +188,7 @@ export const createIncomingLetter = async (req: AuthenticatedRequest, res: Respo
       }
     });
 
-    // Create notification for the created letter
+    // Create global notification for the created letter (visible to all users)
     if (data.isInvitation && data.eventDate) {
       const eventDate = new Date(data.eventDate);
       const daysBefore = Math.ceil((eventDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -196,10 +196,10 @@ export const createIncomingLetter = async (req: AuthenticatedRequest, res: Respo
       if (daysBefore > 0 && daysBefore <= 30) {
         await prisma.notification.create({
           data: {
-            title: 'Pengingat Acara',
-            message: `Anda memiliki acara "${data.subject}" pada tanggal ${formatDate(eventDate)}`,
+            title: 'Acara Baru Ditambahkan',
+            message: `Acara "${data.subject}" telah dijadwalkan pada tanggal ${formatDate(eventDate)} oleh ${letter.user.name}`,
             type: 'INFO',
-            userId: req.user!.userId
+            userId: null // Global notification for all users
           }
         });
       }

@@ -12,6 +12,7 @@ import incomingLetterRoutes from './routes/incomingLetter.routes';
 import outgoingLetterRoutes from './routes/outgoingLetter.routes';
 import notificationRoutes from './routes/notification.routes';
 import calendarRoutes from './routes/calendar.routes';
+import fileRoutes from './routes/file.routes';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
@@ -55,6 +56,7 @@ app.use('/api/incoming-letters', incomingLetterRoutes);
 app.use('/api/outgoing-letters', outgoingLetterRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/calendar', calendarRoutes);
+app.use('/api/files', fileRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
