@@ -174,9 +174,20 @@ export default function CreateOutgoingLetterPage() {
                   Tanggal Dikirim <span className="text-red-500">*</span>
                 </label>
                 <input
-                  {...register('sentDate', { required: 'Tanggal dikirim wajib diisi' })}
+                  {...register('sentDate', { 
+                    required: 'Tanggal dikirim wajib diisi',
+                    validate: (value) => {
+                      const date = new Date(value);
+                      const now = new Date();
+                      if (date > now) {
+                        return 'Tanggal tidak boleh di masa depan';
+                      }
+                      return true;
+                    }
+                  })}
                   type="datetime-local"
                   className="input"
+                  max={new Date().toISOString().slice(0, 16)}
                 />
                 {errors.sentDate && (
                   <p className="mt-1 text-sm text-red-600">{errors.sentDate.message}</p>
@@ -201,7 +212,9 @@ export default function CreateOutgoingLetterPage() {
           <div className="card p-6">
             <div className="flex items-center mb-4">
               <input
-                {...register('isInvitation')}
+                {...register('isInvitation', {
+                  setValueAs: (value) => Boolean(value)
+                })}
                 type="checkbox"
                 id="isInvitation"
                 className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
