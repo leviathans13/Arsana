@@ -132,7 +132,7 @@ export default function DashboardPage() {
             <div className="p-6">
               {incomingLettersData?.letters?.length > 0 ? (
                 <div className="space-y-4">
-                  {incomingLettersData.letters.slice(0, 5).map((letter) => (
+                  {incomingLettersData.letters.slice(0, 5).map((letter: any) => (
                     <div key={letter.id} className="flex items-start space-x-3">
                       <div className="flex-shrink-0">
                         <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -184,7 +184,7 @@ export default function DashboardPage() {
             <div className="p-6">
               {outgoingLettersData?.letters?.length > 0 ? (
                 <div className="space-y-4">
-                  {outgoingLettersData.letters.slice(0, 5).map((letter) => (
+                  {outgoingLettersData.letters.slice(0, 5).map((letter: any) => (
                     <div key={letter.id} className="flex items-start space-x-3">
                       <div className="flex-shrink-0">
                         <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
@@ -237,7 +237,7 @@ export default function DashboardPage() {
             </div>
             <div className="p-6">
               <div className="space-y-4">
-                {upcomingEventsData.events.slice(0, 3).map((event) => (
+                {upcomingEventsData.events.slice(0, 3).map((event: any) => (
                   <div key={event.id} className="flex items-start space-x-3">
                     <div className="flex-shrink-0">
                       <div className="h-8 w-8 bg-purple-100 rounded-full flex items-center justify-center">

@@ -59,7 +59,7 @@ export const getCalendarEvents = async (req: AuthenticatedRequest, res: Response
 
     // Format events
     const events: CalendarEvent[] = [
-      ...incomingInvitations.map(letter => ({
+      ...incomingInvitations.map((letter: any) => ({
         id: letter.id,
         title: letter.subject,
         date: letter.eventDate!,
@@ -68,7 +68,7 @@ export const getCalendarEvents = async (req: AuthenticatedRequest, res: Response
         letterNumber: letter.letterNumber,
         description: letter.description || undefined
       })),
-      ...outgoingInvitations.map(letter => ({
+      ...outgoingInvitations.map((letter: any) => ({
         id: letter.id,
         title: letter.subject,
         date: letter.eventDate!,
@@ -135,7 +135,7 @@ export const getUpcomingEvents = async (req: AuthenticatedRequest, res: Response
 
     // Combine and format events
     const allEvents: CalendarEvent[] = [
-      ...incomingInvitations.map(letter => ({
+      ...incomingInvitations.map((letter: any) => ({
         id: letter.id,
         title: letter.subject,
         date: letter.eventDate!,
@@ -144,7 +144,7 @@ export const getUpcomingEvents = async (req: AuthenticatedRequest, res: Response
         letterNumber: letter.letterNumber,
         description: letter.description || undefined
       })),
-      ...outgoingInvitations.map(letter => ({
+      ...outgoingInvitations.map((letter: any) => ({
         id: letter.id,
         title: letter.subject,
         date: letter.eventDate!,

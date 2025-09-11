@@ -91,7 +91,7 @@ export default function CalendarPage() {
   const events = viewType === 'month' ? calendarData?.events || [] : upcomingData?.events || [];
 
   // Group events by date for upcoming view
-  const groupedEvents = events.reduce((acc, event) => {
+  const groupedEvents = events.reduce((acc: Record<string, CalendarEvent[]>, event: CalendarEvent) => {
     const dateKey = formatDate(event.date);
     if (!acc[dateKey]) {
       acc[dateKey] = [];
@@ -177,11 +177,11 @@ export default function CalendarPage() {
                     <CalendarIcon className="h-5 w-5 mr-2" />
                     {date}
                     <span className="ml-2 text-sm font-normal text-gray-500">
-                      ({dateEvents.length} acara)
+                      ({(dateEvents as CalendarEvent[]).length} acara)
                     </span>
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {dateEvents.map((event) => (
+                    {(dateEvents as CalendarEvent[]).map((event) => (
                       <EventCard key={event.id} event={event} />
                     ))}
                   </div>
@@ -197,7 +197,7 @@ export default function CalendarPage() {
                   </span>
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {events.map((event) => (
+                  {events.map((event: CalendarEvent) => (
                     <EventCard key={event.id} event={event} />
                   ))}
                 </div>
@@ -238,13 +238,13 @@ export default function CalendarPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="card p-4 text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {events.filter(e => e.type === 'incoming').length}
+                {events.filter((e: CalendarEvent) => e.type === 'incoming').length}
               </div>
               <div className="text-sm text-gray-600">Acara dari Surat Masuk</div>
             </div>
             <div className="card p-4 text-center">
               <div className="text-2xl font-bold text-green-600">
-                {events.filter(e => e.type === 'outgoing').length}
+                {events.filter((e: CalendarEvent) => e.type === 'outgoing').length}
               </div>
               <div className="text-sm text-gray-600">Acara dari Surat Keluar</div>
             </div>
