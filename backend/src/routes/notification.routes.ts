@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import { getNotifications, markAsRead, markAllAsRead } from '../controllers/notification.controller';
 
-const router = Router();
+const router: Router = Router();
 
 // All routes require authentication
 router.use(authenticate);

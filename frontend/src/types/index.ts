@@ -1,17 +1,27 @@
+// =======================
+// 📌 Union Types
+// =======================
 export type Role = 'ADMIN' | 'STAFF';
-
 export type LetterCategory = 'GENERAL' | 'INVITATION' | 'OFFICIAL' | 'ANNOUNCEMENT';
-
 export type NotificationType = 'INFO' | 'WARNING' | 'SUCCESS' | 'ERROR';
 
+// =======================
+// 📌 User Types
+// =======================
 export interface User {
   id: string;
   email: string;
   name: string;
   role: Role;
-  createdAt: string;
+  createdAt: string; // ISO date string
 }
 
+// Mini version for embedded relations
+export type UserMini = Pick<User, 'id' | 'name' | 'email'>;
+
+// =======================
+// 📌 Auth Types
+// =======================
 export interface LoginRequest {
   email: string;
   password: string;
@@ -29,12 +39,15 @@ export interface AuthResponse {
   user: User;
 }
 
+// =======================
+// 📌 Letter Types
+// =======================
 export interface IncomingLetter {
   id: string;
   letterNumber: string;
   subject: string;
   sender: string;
-  receivedDate: string;
+  receivedDate: string; // ISO date string
   category: LetterCategory;
   description?: string;
   fileName?: string;
@@ -45,11 +58,7 @@ export interface IncomingLetter {
   createdAt: string;
   updatedAt: string;
   userId: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  user: UserMini;
 }
 
 export interface OutgoingLetter {
@@ -68,11 +77,7 @@ export interface OutgoingLetter {
   createdAt: string;
   updatedAt: string;
   userId: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  user: UserMini;
 }
 
 export interface CreateIncomingLetterRequest {
@@ -85,7 +90,7 @@ export interface CreateIncomingLetterRequest {
   isInvitation?: boolean;
   eventDate?: string;
   eventLocation?: string;
-  file?: File;
+  file?: File | Blob;
 }
 
 export interface CreateOutgoingLetterRequest {
@@ -98,19 +103,27 @@ export interface CreateOutgoingLetterRequest {
   isInvitation?: boolean;
   eventDate?: string;
   eventLocation?: string;
-  file?: File;
+  file?: File | Blob;
+}
+
+// =======================
+// 📌 Pagination
+// =======================
+export interface Pagination {
+  current: number;
+  limit: number;
+  total: number;
+  pages: number;
 }
 
 export interface PaginationResponse<T> {
   letters: T[];
-  pagination: {
-    current: number;
-    limit: number;
-    total: number;
-    pages: number;
-  };
+  pagination: Pagination;
 }
 
+// =======================
+// 📌 Notification
+// =======================
 export interface Notification {
   id: string;
   title: string;
@@ -124,19 +137,17 @@ export interface Notification {
 
 export interface NotificationResponse {
   notifications: Notification[];
-  pagination: {
-    current: number;
-    limit: number;
-    total: number;
-    pages: number;
-  };
+  pagination: Pagination;
   unreadCount: number;
 }
 
+// =======================
+// 📌 Calendar
+// =======================
 export interface CalendarEvent {
   id: string;
   title: string;
-  date: string;
+  date: string; // ISO date string
   location?: string;
   type: 'incoming' | 'outgoing';
   letterNumber: string;
