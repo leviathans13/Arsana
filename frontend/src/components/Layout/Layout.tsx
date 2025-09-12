@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Home, 
   FileText, 
@@ -54,7 +55,11 @@ export default function Layout({ children }: LayoutProps) {
           <div className="fixed inset-0 bg-gray-900 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
           <div className="fixed top-0 left-0 bottom-0 flex flex-col w-64 bg-white">
             <div className="flex items-center justify-between p-4 border-b">
-              <h1 className="text-xl font-bold text-gray-900">Arsana</h1>
+              <div className="flex items-center">
+                <div className="relative h-12 w-40">
+                  <Image src="/ARSANA.svg" alt="Arsana Logo" fill style={{ objectFit: 'contain' }} priority />
+                </div>
+              </div>
               <button
                 onClick={() => setSidebarOpen(false)}
                 className="p-1 rounded-lg hover:bg-gray-100"
@@ -112,8 +117,12 @@ export default function Layout({ children }: LayoutProps) {
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex flex-col flex-grow bg-white border-r border-gray-200">
-          <div className="flex items-center flex-shrink-0 px-4 py-4 border-b">
-            <h1 className="text-xl font-bold text-gray-900">Arsana</h1>
+          <div className="flex items-center flex-shrink-0 px-4 py-6 border-b">
+            <div className="flex items-center w-full justify-center">
+              <div className="relative h-14 w-48">
+                <Image src="/ARSANA.svg" alt="Arsana Logo" fill style={{ objectFit: 'contain' }} priority />
+              </div>
+            </div>
           </div>
           <nav className="flex-1 px-4 py-4">
             <ul className="space-y-2">
