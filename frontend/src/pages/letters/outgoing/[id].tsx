@@ -13,27 +13,31 @@ import {
   MapPin,
   Clock,
   AlertTriangle,
-  Info
+  Info,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useOutgoingLetter, useDeleteOutgoingLetter } from '@/hooks/useApi';
 import Layout from '@/components/Layout/Layout';
+import FileDownload from '@/components/FileDownload';
 import { formatDate, formatDateTime } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
 import Image from 'next/image';
 
-const categoryStyles = {
-  GENERAL: { bg: 'bg-gray-100', text: 'text-gray-800', border: 'border-gray-300' },
-  INVITATION: { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-300' },
-  OFFICIAL: { bg: 'bg-indigo-100', text: 'text-indigo-800', border: 'border-indigo-300' },
-  ANNOUNCEMENT: { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-300' },
+const natureStyles = {
+  BIASA: { bg: 'bg-gray-100', text: 'text-gray-800' },
+  TERBATAS: { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+  RAHASIA: { bg: 'bg-red-100', text: 'text-red-800' },
+  SANGAT_RAHASIA: { bg: 'bg-red-200', text: 'text-red-900' },
+  PENTING: { bg: 'bg-orange-100', text: 'text-orange-800' },
 };
 
-const categoryLabels = {
-  GENERAL: 'Umum',
-  INVITATION: 'Undangan',
-  OFFICIAL: 'Resmi',
-  ANNOUNCEMENT: 'Pengumuman',
+const natureLabels = {
+  BIASA: 'Biasa',
+  TERBATAS: 'Terbatas',
+  RAHASIA: 'Rahasia',
+  SANGAT_RAHASIA: 'Sangat Rahasia',
+  PENTING: 'Penting',
 };
 
 const DetailItem = ({ icon: Icon, label, children }: { icon: React.ElementType, label: string, children: React.ReactNode }) => (
@@ -80,20 +84,6 @@ export default function OutgoingLetterDetailPage() {
     setShowDeleteConfirm(false);
   };
 
-  const handleDownload = () => {
-    if (letter?.id) {
-      const link = document.createElement('a');
-      link.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/files/outgoing/${letter.id}`;
-      link.download = letter.fileName || 'document';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success('Unduhan dimulai...');
-    } else {
-      toast.error('File tidak ditemukan.');
-    }
-  };
-
   if (loading || isLoading) {
     return (
       <Layout>
@@ -131,7 +121,7 @@ export default function OutgoingLetterDetailPage() {
     );
   }
 
-  const categoryStyle = categoryStyles[letter.category as keyof typeof categoryStyles] || categoryStyles.GENERAL;
+  const natureStyle = natureStyles[letter.letterNature as keyof typeof natureStyles] || natureStyles.BIASA;
 
   return (
     <Layout>
@@ -185,27 +175,64 @@ export default function OutgoingLetterDetailPage() {
                   </div>
                   Informasi Surat
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-5">
+                  <DetailItem icon={Clock} label="Tanggal Pembuatan">
+                    {formatDate(letter.createdDate)}
+                  </DetailItem>
+                  
+                  <DetailItem icon={Clock} label="Tanggal Surat">
+                    {formatDate(letter.letterDate)}
+                  </DetailItem>
+                  
+                  {letter.executionDate && (
+                    <DetailItem icon={Clock} label="Tanggal Pelaksanaan">
+                      {formatDate(letter.executionDate)}
+                    </DetailItem>
+                  )}
+                  
+                  <DetailItem icon={User} label="Pengirim">
+                    {letter.sender}
+                  </DetailItem>
+                  
                   <DetailItem icon={User} label="Penerima">
                     {letter.recipient}
                   </DetailItem>
-                  <DetailItem icon={Clock} label="Tanggal Dikirim">
-                    {formatDate(letter.sentDate)}
+                  
+                  <DetailItem icon={User} label="Pengolah">
+                    {letter.processor}
                   </DetailItem>
-                  <DetailItem icon={Tag} label="Kategori">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium ${categoryStyle.bg} ${categoryStyle.text}`}>
-                      {categoryLabels[letter.category as keyof typeof categoryLabels]}
+                  
+                  <DetailItem icon={Tag} label="Sifat Surat">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium ${natureStyle.bg} ${natureStyle.text}`}>
+                      {natureLabels[letter.letterNature as keyof typeof natureLabels]}
                     </span>
                   </DetailItem>
+                  
+                  <DetailItem icon={Tag} label="Klasifikasi Keamanan">
+                    {letter.securityClass}
+                  </DetailItem>
+                  
+                  {letter.classificationCode && (
+                    <DetailItem icon={Tag} label="Kode Klasifikasi">
+                      {letter.classificationCode}
+                    </DetailItem>
+                  )}
+                  
+                  {letter.serialNumber && (
+                    <DetailItem icon={Tag} label="Nomor Urut">
+                      {letter.serialNumber}
+                    </DetailItem>
+                  )}
                 </div>
-                {letter.description && (
+                
+                {letter.note && (
                   <div className="mt-6">
                     <label className="text-sm font-medium text-gray-500 flex items-center mb-1">
                       <Info className="h-4 w-4 mr-2" />
-                      Deskripsi
+                      Catatan
                     </label>
                     <div className="p-4 bg-gray-50 rounded-lg text-gray-800 whitespace-pre-wrap text-sm leading-relaxed">
-                      {letter.description}
+                      {letter.note}
                     </div>
                   </div>
                 )}
@@ -224,16 +251,35 @@ export default function OutgoingLetterDetailPage() {
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
                     {letter.eventDate && (
-                      <DetailItem icon={Calendar} label="Tanggal & Waktu Acara">
-                        {formatDateTime(letter.eventDate)}
+                      <DetailItem icon={Calendar} label="Tanggal Acara">
+                        {formatDate(letter.eventDate)}
                       </DetailItem>
                     )}
+                    
+                    {letter.eventTime && (
+                      <DetailItem icon={Clock} label="Waktu Acara">
+                        {letter.eventTime}
+                      </DetailItem>
+                    )}
+                    
                     {letter.eventLocation && (
                       <DetailItem icon={MapPin} label="Lokasi Acara">
                         {letter.eventLocation}
                       </DetailItem>
                     )}
                   </div>
+                  
+                  {letter.eventNotes && (
+                    <div className="mt-6">
+                      <label className="text-sm font-medium text-gray-500 flex items-center mb-1">
+                        <Info className="h-4 w-4 mr-2" />
+                        Catatan Acara
+                      </label>
+                      <div className="p-4 bg-gray-50 rounded-lg text-gray-800 whitespace-pre-wrap text-sm leading-relaxed">
+                        {letter.eventNotes}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -242,21 +288,17 @@ export default function OutgoingLetterDetailPage() {
           {/* Sidebar */}
           <div className="space-y-8">
             {/* File Attachment */}
-            {letter.fileName && (
-              <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">File Lampiran</h3>
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3 min-w-0">
-                    <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Send className="h-5 w-5 text-green-600" />
-                    </div>
-                    <p className="text-sm font-medium text-gray-900 truncate">{letter.fileName}</p>
-                  </div>
-                  <button
-                    onClick={handleDownload}
-                    className="ml-4 flex-shrink-0 inline-flex items-center p-2 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700"
-                  >
-                    <Download className="h-5 w-5" />
+            <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <FileText className="h-5 w-5 mr-2" />
+                File Lampiran
+              </h3>
+              <FileDownload 
+                letterId={letter.id}
+                letterType="outgoing"
+                fileName={letter.fileName}
+              />
+            </div>
                   </button>
                 </div>
               </div>
