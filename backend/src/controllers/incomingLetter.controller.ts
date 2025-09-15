@@ -58,12 +58,29 @@ const incomingLetterSchema = z.object({
     .min(3, 'Nomor surat minimal 3 karakter')
     .max(50, 'Nomor surat maksimal 50 karakter')
     .regex(/^[A-Za-z0-9\-\/]+$/, 'Nomor surat hanya boleh berisi huruf, angka, tanda hubung, dan garis miring'),
+  letterDate: z.string()
+    .datetime('Format tanggal surat tidak valid')
+    .optional()
+    .nullable(),
+  letterNature: z.enum(['BIASA', 'TERBATAS', 'RAHASIA', 'SANGAT_RAHASIA', 'PENTING'], {
+    errorMap: () => ({ message: 'Sifat surat tidak valid' })
+  }).default('BIASA'),
   subject: z.string()
     .min(5, 'Subjek minimal 5 karakter')
     .max(200, 'Subjek maksimal 200 karakter'),
   sender: z.string()
     .min(2, 'Nama pengirim minimal 2 karakter')
     .max(100, 'Nama pengirim maksimal 100 karakter'),
+  recipient: z.string()
+    .min(2, 'Nama penerima minimal 2 karakter')
+    .max(100, 'Nama penerima maksimal 100 karakter'),
+  processor: z.string()
+    .min(2, 'Nama pengolah minimal 2 karakter')
+    .max(100, 'Nama pengolah maksimal 100 karakter'),
+  note: z.string()
+    .max(1000, 'Keterangan maksimal 1000 karakter')
+    .optional()
+    .nullable(),
   receivedDate: z.string()
     .datetime('Format tanggal tidak valid')
     .refine((date) => {
@@ -71,21 +88,22 @@ const incomingLetterSchema = z.object({
       const now = new Date();
       return receivedDate <= now;
     }, 'Tanggal diterima tidak boleh di masa depan'),
-  category: z.enum(['GENERAL', 'INVITATION', 'OFFICIAL', 'ANNOUNCEMENT'], {
-    errorMap: () => ({ message: 'Kategori tidak valid' })
-  }).default('GENERAL'),
-  description: z.string()
-    .max(1000, 'Deskripsi maksimal 1000 karakter')
-    .optional()
-    .nullable(),
-  // Perbaikan: koersi boolean
+  // Invitation specific fields
   isInvitation: z.preprocess(toBoolean, z.boolean()).default(false),
   eventDate: z.string()
     .datetime('Format tanggal acara tidak valid')
     .optional()
     .nullable(),
+  eventTime: z.string()
+    .max(20, 'Waktu acara maksimal 20 karakter')
+    .optional()
+    .nullable(),
   eventLocation: z.string()
     .max(200, 'Lokasi acara maksimal 200 karakter')
+    .optional()
+    .nullable(),
+  eventNotes: z.string()
+    .max(1000, 'Catatan acara maksimal 1000 karakter')
     .optional()
     .nullable()
 }).refine((data) => {
@@ -111,6 +129,12 @@ const updateIncomingLetterSchema = z.object({
     .max(50, 'Nomor surat maksimal 50 karakter')
     .regex(/^[A-Za-z0-9\-\/]+$/, 'Nomor surat hanya boleh berisi huruf, angka, tanda hubung, dan garis miring')
     .optional(),
+  letterDate: z.string()
+    .datetime('Format tanggal surat tidak valid')
+    .optional()
+    .nullable(),
+  letterNature: z.enum(['BIASA', 'TERBATAS', 'RAHASIA', 'SANGAT_RAHASIA', 'PENTING'])
+    .optional(),
   subject: z.string()
     .min(5, 'Subjek minimal 5 karakter')
     .max(200, 'Subjek maksimal 200 karakter')
@@ -119,23 +143,37 @@ const updateIncomingLetterSchema = z.object({
     .min(2, 'Nama pengirim minimal 2 karakter')
     .max(100, 'Nama pengirim maksimal 100 karakter')
     .optional(),
+  recipient: z.string()
+    .min(2, 'Nama penerima minimal 2 karakter')
+    .max(100, 'Nama penerima maksimal 100 karakter')
+    .optional(),
+  processor: z.string()
+    .min(2, 'Nama pengolah minimal 2 karakter')
+    .max(100, 'Nama pengolah maksimal 100 karakter')
+    .optional(),
+  note: z.string()
+    .max(1000, 'Keterangan maksimal 1000 karakter')
+    .optional()
+    .nullable(),
   receivedDate: z.string()
     .datetime('Format tanggal tidak valid')
     .optional(),
-  category: z.enum(['GENERAL', 'INVITATION', 'OFFICIAL', 'ANNOUNCEMENT'])
-    .optional(),
-  description: z.string()
-    .max(1000, 'Deskripsi maksimal 1000 karakter')
-    .optional()
-    .nullable(),
-  // Perbaikan: koersi boolean
+  // Invitation specific fields
   isInvitation: z.preprocess(toBoolean, z.boolean()).optional(),
   eventDate: z.string()
     .datetime('Format tanggal acara tidak valid')
     .optional()
     .nullable(),
+  eventTime: z.string()
+    .max(20, 'Waktu acara maksimal 20 karakter')
+    .optional()
+    .nullable(),
   eventLocation: z.string()
     .max(200, 'Lokasi acara maksimal 200 karakter')
+    .optional()
+    .nullable(),
+  eventNotes: z.string()
+    .max(1000, 'Catatan acara maksimal 1000 karakter')
     .optional()
     .nullable()
 });
@@ -165,11 +203,20 @@ export const createIncomingLetter = async (req: AuthenticatedRequest, res: Respo
 
     // Prepare letter data
     const letterData = {
-      ...data,
+      letterNumber: data.letterNumber,
+      letterDate: data.letterDate ? new Date(data.letterDate) : null,
+      letterNature: data.letterNature || 'BIASA',
+      subject: data.subject,
+      sender: data.sender,
+      recipient: data.recipient,
+      processor: data.processor,
+      note: data.note || null,
       receivedDate: new Date(data.receivedDate),
+      isInvitation: data.isInvitation || false,
       eventDate: data.eventDate ? new Date(data.eventDate) : null,
-      description: data.description || null,
+      eventTime: data.eventTime || null,
       eventLocation: data.eventLocation || null,
+      eventNotes: data.eventNotes || null,
       userId: req.user!.userId,
       fileName: req.file?.originalname || null,
       filePath: req.file?.path || null
@@ -249,7 +296,7 @@ export const getIncomingLetters = async (req: AuthenticatedRequest, res: Respons
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const search = req.query.search as string;
-    const category = req.query.category as string;
+    const letterNature = req.query.letterNature as string;
     
     const skip = (page - 1) * limit;
     
@@ -259,12 +306,14 @@ export const getIncomingLetters = async (req: AuthenticatedRequest, res: Respons
       where.OR = [
         { subject: { contains: search, mode: 'insensitive' } },
         { sender: { contains: search, mode: 'insensitive' } },
+        { recipient: { contains: search, mode: 'insensitive' } },
+        { processor: { contains: search, mode: 'insensitive' } },
         { letterNumber: { contains: search, mode: 'insensitive' } }
       ];
     }
     
-    if (category) {
-      where.category = category;
+    if (letterNature) {
+      where.letterNature = letterNature;
     }
 
     const [letters, total] = await Promise.all([
@@ -279,6 +328,17 @@ export const getIncomingLetters = async (req: AuthenticatedRequest, res: Respons
               id: true,
               name: true,
               email: true
+            }
+          },
+          dispositions: {
+            include: {
+              incomingLetter: {
+                select: {
+                  id: true,
+                  letterNumber: true,
+                  subject: true
+                }
+              }
             }
           }
         }
@@ -314,6 +374,18 @@ export const getIncomingLetterById = async (req: AuthenticatedRequest, res: Resp
             name: true,
             email: true
           }
+        },
+        dispositions: {
+          include: {
+            incomingLetter: {
+              select: {
+                id: true,
+                letterNumber: true,
+                subject: true
+              }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
         }
       }
     });
@@ -351,9 +423,20 @@ export const updateIncomingLetter = async (req: AuthenticatedRequest, res: Respo
     }
 
     const updateData: any = {
-      ...data,
-      receivedDate: data.receivedDate ? new Date(data.receivedDate) : undefined,
-      eventDate: data.eventDate ? new Date(data.eventDate) : undefined,
+      ...(data.letterNumber && { letterNumber: data.letterNumber }),
+      ...(data.letterDate !== undefined && { letterDate: data.letterDate ? new Date(data.letterDate) : null }),
+      ...(data.letterNature && { letterNature: data.letterNature }),
+      ...(data.subject && { subject: data.subject }),
+      ...(data.sender && { sender: data.sender }),
+      ...(data.recipient && { recipient: data.recipient }),
+      ...(data.processor && { processor: data.processor }),
+      ...(data.note !== undefined && { note: data.note || null }),
+      ...(data.receivedDate && { receivedDate: new Date(data.receivedDate) }),
+      ...(data.isInvitation !== undefined && { isInvitation: data.isInvitation }),
+      ...(data.eventDate !== undefined && { eventDate: data.eventDate ? new Date(data.eventDate) : null }),
+      ...(data.eventTime !== undefined && { eventTime: data.eventTime || null }),
+      ...(data.eventLocation !== undefined && { eventLocation: data.eventLocation || null }),
+      ...(data.eventNotes !== undefined && { eventNotes: data.eventNotes || null })
     };
 
     if (req.file) {
