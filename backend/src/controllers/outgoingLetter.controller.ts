@@ -3,10 +3,45 @@ import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { formatDate } from '../utils/helpers';
-import { upload } from './incomingLetter.controller';
+import multer from 'multer';
+import path from 'path';
 import fs from 'fs';
 
 const prisma = new PrismaClient();
+
+// Multer configuration for outgoing letter file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, '../../uploads/letters/outgoing');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const sanitizedOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, `outgoing-${uniqueSuffix}-${sanitizedOriginalName}`);
+  }
+});
+
+export const upload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /pdf|doc|docx|jpg|jpeg|png/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Only PDF, DOC, DOCX, JPG, JPEG, PNG files are allowed.'));
+    }
+  }
+});
 
 // Helper untuk koersi boolean dari multipart/form-data
 const toBoolean = (val: unknown) => {
