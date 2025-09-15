@@ -34,7 +34,7 @@ export const getCalendarEvents = async (req: AuthenticatedRequest, res: Response
         eventDate: true,
         eventLocation: true,
         letterNumber: true,
-        description: true
+        
       }
     });
 
@@ -53,7 +53,7 @@ export const getCalendarEvents = async (req: AuthenticatedRequest, res: Response
         eventDate: true,
         eventLocation: true,
         letterNumber: true,
-        description: true
+        
       }
     });
 
@@ -108,7 +108,7 @@ export const getUpcomingEvents = async (req: AuthenticatedRequest, res: Response
         eventDate: true,
         eventLocation: true,
         letterNumber: true,
-        description: true
+        
       },
       orderBy: { eventDate: 'asc' },
       take: limit
@@ -127,7 +127,7 @@ export const getUpcomingEvents = async (req: AuthenticatedRequest, res: Response
         eventDate: true,
         eventLocation: true,
         letterNumber: true,
-        description: true
+        
       },
       orderBy: { eventDate: 'asc' },
       take: limit
