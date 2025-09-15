@@ -39,14 +39,15 @@ export default function CreateIncomingLetterPage() {
         ...data,
         // Ensure dates are properly formatted as ISO strings
         receivedDate: new Date(data.receivedDate).toISOString(),
+        letterDate: data.letterDate ? new Date(data.letterDate).toISOString() : undefined,
         eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : undefined,
         // Ensure boolean conversion
         isInvitation: Boolean(data.isInvitation),
         // Handle optional fields
-        description: data.description || undefined,
+        note: data.note || undefined,
+        eventTime: data.eventTime || undefined,
         eventLocation: data.eventLocation || undefined,
-        // Set default category if not provided
-        category: data.category || 'GENERAL',
+        eventNotes: data.eventNotes || undefined,
         file: selectedFile || undefined,
       };
 
