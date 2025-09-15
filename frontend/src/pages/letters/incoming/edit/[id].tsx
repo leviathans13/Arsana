@@ -37,14 +37,19 @@ export default function EditIncomingLetterPage() {
       const letter = letterData.data;
       reset({
         letterNumber: letter.letterNumber,
+        letterDate: letter.letterDate ? new Date(letter.letterDate).toISOString().split('T')[0] : '',
+        letterNature: letter.letterNature || 'BIASA',
         subject: letter.subject,
         sender: letter.sender,
+        recipient: letter.recipient,
+        processor: letter.processor,
+        note: letter.note || '',
         receivedDate: new Date(letter.receivedDate).toISOString().split('T')[0],
-        category: letter.category,
-        description: letter.description || '',
         isInvitation: letter.isInvitation,
         eventDate: letter.eventDate ? new Date(letter.eventDate).toISOString().split('T')[0] : '',
+        eventTime: letter.eventTime || '',
         eventLocation: letter.eventLocation || '',
+        eventNotes: letter.eventNotes || '',
       });
     }
   }, [letterData, reset]);
@@ -66,14 +71,15 @@ export default function EditIncomingLetterPage() {
         ...data,
         // Ensure dates are properly formatted as ISO strings
         receivedDate: new Date(data.receivedDate).toISOString(),
+        letterDate: data.letterDate ? new Date(data.letterDate).toISOString() : undefined,
         eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : undefined,
         // Ensure boolean conversion
         isInvitation: Boolean(data.isInvitation),
         // Handle optional fields
-        description: data.description || undefined,
+        note: data.note || undefined,
+        eventTime: data.eventTime || undefined,
         eventLocation: data.eventLocation || undefined,
-        // Set default category if not provided
-        category: data.category || 'GENERAL',
+        eventNotes: data.eventNotes || undefined,
         file: selectedFile || undefined,
       };
 
@@ -277,14 +283,15 @@ export default function EditIncomingLetterPage() {
                   Kategori
                 </label>
                 <select
-                  id="category"
-                  {...register('category')}
+                  id="letterNature"
+                  {...register('letterNature')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                 >
-                  <option value="GENERAL">Umum</option>
-                  <option value="INVITATION">Undangan</option>
-                  <option value="OFFICIAL">Resmi</option>
-                  <option value="ANNOUNCEMENT">Pengumuman</option>
+                  <option value="BIASA">Biasa</option>
+                  <option value="TERBATAS">Terbatas</option>
+                  <option value="RAHASIA">Rahasia</option>
+                  <option value="SANGAT_RAHASIA">Sangat Rahasia</option>
+                  <option value="PENTING">Penting</option>
                 </select>
               </div>
 
