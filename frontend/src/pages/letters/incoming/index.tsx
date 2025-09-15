@@ -18,18 +18,20 @@ import Layout from '@/components/Layout/Layout';
 import { formatDate } from '@/lib/utils';
 import { IncomingLetter, LetterCategory } from '@/types';
 
-const categoryColors = {
-  GENERAL: 'bg-gray-100 text-gray-800',
-  INVITATION: 'bg-purple-100 text-purple-800',
-  OFFICIAL: 'bg-blue-100 text-blue-800',
-  ANNOUNCEMENT: 'bg-green-100 text-green-800',
+const natureColors = {
+  BIASA: 'bg-gray-100 text-gray-800',
+  TERBATAS: 'bg-yellow-100 text-yellow-800',
+  RAHASIA: 'bg-red-100 text-red-800',
+  SANGAT_RAHASIA: 'bg-red-200 text-red-900',
+  PENTING: 'bg-orange-100 text-orange-800',
 };
 
-const categoryLabels = {
-  GENERAL: 'Umum',
-  INVITATION: 'Undangan',
-  OFFICIAL: 'Resmi',
-  ANNOUNCEMENT: 'Pengumuman',
+const natureLabels = {
+  BIASA: 'Biasa',
+  TERBATAS: 'Terbatas',
+  RAHASIA: 'Rahasia',
+  SANGAT_RAHASIA: 'Sangat Rahasia',
+  PENTING: 'Penting',
 };
 
 export default function IncomingLettersPage() {
@@ -37,7 +39,7 @@ export default function IncomingLettersPage() {
   const { user, isAuthenticated, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<LetterCategory | ''>('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(null);
 
   const { data, isLoading, error } = useIncomingLetters({
@@ -128,13 +130,14 @@ export default function IncomingLettersPage() {
               <select
                 className="input"
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value as LetterCategory | '')}
+                onChange={(e) => setCategoryFilter(e.target.value)}
               >
-                <option value="">Semua Kategori</option>
-                <option value="GENERAL">Umum</option>
-                <option value="INVITATION">Undangan</option>
-                <option value="OFFICIAL">Resmi</option>
-                <option value="ANNOUNCEMENT">Pengumuman</option>
+                <option value="">Semua Sifat</option>
+                <option value="BIASA">Biasa</option>
+                <option value="TERBATAS">Terbatas</option>
+                <option value="RAHASIA">Rahasia</option>
+                <option value="SANGAT_RAHASIA">Sangat Rahasia</option>
+                <option value="PENTING">Penting</option>
               </select>
             </div>
             <button type="submit" className="btn btn-primary">
@@ -198,8 +201,8 @@ export default function IncomingLettersPage() {
                           {letter.sender}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`badge ${categoryColors[letter.category]}`}>
-                            {categoryLabels[letter.category]}
+                          <span className={`badge ${natureColors[letter.letterNature as keyof typeof natureColors] || natureColors.BIASA}`}>
+                            {natureLabels[letter.letterNature as keyof typeof natureLabels] || letter.letterNature}
                           </span>
                           {letter.isInvitation && (
                             <span className="badge badge-primary ml-1">

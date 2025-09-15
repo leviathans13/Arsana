@@ -23,6 +23,7 @@ import { toast } from 'react-hot-toast';
 import Image from 'next/image';
 
 import FileDownload from '@/components/FileDownload';
+import DispositionManager from '@/components/DispositionManager';
 
 const natureStyles = {
   BIASA: { bg: 'bg-gray-100', text: 'text-gray-800' },
@@ -263,6 +264,13 @@ export default function IncomingLetterDetailPage() {
                 </div>
               </div>
             )}
+
+            {/* Disposition Management */}
+            <DispositionManager
+              incomingLetterId={letter.id}
+              letterNumber={letter.letterNumber}
+              letterSubject={letter.subject}
+            />
           </div>
 
           {/* Sidebar */}
@@ -279,9 +287,6 @@ export default function IncomingLetterDetailPage() {
                 fileName={letter.fileName}
               />
             </div>
-                </div>
-              </div>
-            )}
 
             {/* Metadata */}
             <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-200">

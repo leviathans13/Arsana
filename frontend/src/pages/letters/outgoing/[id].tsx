@@ -299,10 +299,6 @@ export default function OutgoingLetterDetailPage() {
                 fileName={letter.fileName}
               />
             </div>
-                  </button>
-                </div>
-              </div>
-            )}
 
             {/* Metadata */}
             <div className="bg-white shadow-sm rounded-xl p-6 border border-gray-200">

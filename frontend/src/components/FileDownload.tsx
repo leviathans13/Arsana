@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, Eye, FileText, Image, FileImage } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import Cookies from 'js-cookie';
 import { toast } from 'react-hot-toast';
 
 interface FileDownloadProps {
@@ -27,7 +28,8 @@ const FileDownload: React.FC<FileDownloadProps> = ({
   const [loading, setLoading] = useState(false);
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const [fileExists, setFileExists] = useState<boolean | null>(null);
-  const { token } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const token = Cookies.get('authToken');
 
   // Check if file exists and get info
   const checkFileInfo = async () => {
@@ -95,7 +97,7 @@ const FileDownload: React.FC<FileDownloadProps> = ({
       window.URL.revokeObjectURL(url);
       
       toast.success('File downloaded successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Download error:', error);
       toast.error(error.message || 'Failed to download file');
     } finally {
