@@ -37,14 +37,23 @@ export default function EditOutgoingLetterPage() {
       const letter = letterData.data;
       reset({
         letterNumber: letter.letterNumber,
+        createdDate: new Date(letter.createdDate).toISOString().split('T')[0],
+        letterDate: new Date(letter.letterDate).toISOString().split('T')[0],
+        securityClass: letter.securityClass || 'BIASA',
+        classificationCode: letter.classificationCode || '',
+        serialNumber: letter.serialNumber || '',
+        letterNature: letter.letterNature || 'BIASA',
         subject: letter.subject,
+        executionDate: letter.executionDate ? new Date(letter.executionDate).toISOString().split('T')[0] : '',
+        sender: letter.sender,
         recipient: letter.recipient,
-        sentDate: new Date(letter.sentDate).toISOString().split('T')[0],
-        category: letter.category,
-        description: letter.description || '',
+        processor: letter.processor,
+        note: letter.note || '',
         isInvitation: letter.isInvitation,
         eventDate: letter.eventDate ? new Date(letter.eventDate).toISOString().split('T')[0] : '',
+        eventTime: letter.eventTime || '',
         eventLocation: letter.eventLocation || '',
+        eventNotes: letter.eventNotes || '',
       });
     }
   }, [letterData, reset]);
@@ -65,15 +74,22 @@ export default function EditOutgoingLetterPage() {
       const formData = {
         ...data,
         // Ensure dates are properly formatted as ISO strings
-        sentDate: new Date(data.sentDate).toISOString(),
+        createdDate: new Date(data.createdDate).toISOString(),
+        letterDate: new Date(data.letterDate).toISOString(),
+        executionDate: data.executionDate ? new Date(data.executionDate).toISOString() : undefined,
         eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : undefined,
         // Ensure boolean conversion
         isInvitation: Boolean(data.isInvitation),
         // Handle optional fields
-        description: data.description || undefined,
+        note: data.note || undefined,
+        classificationCode: data.classificationCode || undefined,
+        serialNumber: data.serialNumber ? parseInt(data.serialNumber as string) : undefined,
+        eventTime: data.eventTime || undefined,
         eventLocation: data.eventLocation || undefined,
-        // Set default category if not provided
-        category: data.category || 'GENERAL',
+        eventNotes: data.eventNotes || undefined,
+        // Set default values
+        securityClass: data.securityClass || 'BIASA',
+        letterNature: data.letterNature || 'BIASA',
         file: selectedFile || undefined,
       };
 
@@ -186,7 +202,7 @@ export default function EditOutgoingLetterPage() {
           {/* Basic Information */}
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-6">Informasi Dasar</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Letter Number */}
               <div>
                 <label htmlFor="letterNumber" className="block text-sm font-medium text-gray-700 mb-2">
@@ -209,26 +225,120 @@ export default function EditOutgoingLetterPage() {
                 )}
               </div>
 
-              {/* Sent Date */}
+              {/* Created Date */}
               <div>
-                <label htmlFor="sentDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  Tanggal Dikirim *
+                <label htmlFor="createdDate" className="block text-sm font-medium text-gray-700 mb-2">
+                  Tanggal Pembuatan *
                 </label>
                 <input
                   type="date"
-                  id="sentDate"
-                  {...register('sentDate', { required: 'Tanggal dikirim harus diisi' })}
+                  id="createdDate"
+                  {...register('createdDate', { required: 'Tanggal pembuatan harus diisi' })}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
-                    errors.sentDate ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    errors.createdDate ? 'border-red-300 bg-red-50' : 'border-gray-300'
                   }`}
                 />
-                {errors.sentDate && (
-                  <p className="mt-1 text-sm text-red-600">{errors.sentDate.message}</p>
+                {errors.createdDate && (
+                  <p className="mt-1 text-sm text-red-600">{errors.createdDate.message}</p>
                 )}
               </div>
 
+              {/* Letter Date */}
+              <div>
+                <label htmlFor="letterDate" className="block text-sm font-medium text-gray-700 mb-2">
+                  Tanggal Surat *
+                </label>
+                <input
+                  type="date"
+                  id="letterDate"
+                  {...register('letterDate', { required: 'Tanggal surat harus diisi' })}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
+                    errors.letterDate ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
+                />
+                {errors.letterDate && (
+                  <p className="mt-1 text-sm text-red-600">{errors.letterDate.message}</p>
+                )}
+              </div>
+
+              {/* Security Class */}
+              <div>
+                <label htmlFor="securityClass" className="block text-sm font-medium text-gray-700 mb-2">
+                  Klasifikasi Keamanan
+                </label>
+                <select
+                  id="securityClass"
+                  {...register('securityClass')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                >
+                  <option value="BIASA">Biasa</option>
+                </select>
+              </div>
+
+              {/* Classification Code */}
+              <div>
+                <label htmlFor="classificationCode" className="block text-sm font-medium text-gray-700 mb-2">
+                  Kode Klasifikasi
+                </label>
+                <input
+                  type="text"
+                  id="classificationCode"
+                  {...register('classificationCode')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                  placeholder="Kode klasifikasi (opsional)"
+                />
+              </div>
+
+              {/* Serial Number */}
+              <div>
+                <label htmlFor="serialNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                  Nomor Urut
+                </label>
+                <input
+                  type="number"
+                  id="serialNumber"
+                  {...register('serialNumber', { min: { value: 1, message: 'Nomor urut minimal 1' } })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                  placeholder="Nomor urut (opsional)"
+                />
+                {errors.serialNumber && (
+                  <p className="mt-1 text-sm text-red-600">{errors.serialNumber.message}</p>
+                )}
+              </div>
+
+              {/* Letter Nature */}
+              <div>
+                <label htmlFor="letterNature" className="block text-sm font-medium text-gray-700 mb-2">
+                  Sifat Surat
+                </label>
+                <select
+                  id="letterNature"
+                  {...register('letterNature')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                >
+                  <option value="BIASA">Biasa</option>
+                  <option value="TERBATAS">Terbatas</option>
+                  <option value="RAHASIA">Rahasia</option>
+                  <option value="SANGAT_RAHASIA">Sangat Rahasia</option>
+                  <option value="PENTING">Penting</option>
+                </select>
+              </div>
+
+              {/* Execution Date */}
+              <div>
+                <label htmlFor="executionDate" className="block text-sm font-medium text-gray-700 mb-2">
+                  Tanggal Pelaksanaan
+                </label>
+                <input
+                  type="date"
+                  id="executionDate"
+                  {...register('executionDate')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                />
+              </div>
+
               {/* Subject */}
-              <div className="md:col-span-2">
+              <div className="md:col-span-3">
                 <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
                   Subjek/Perihal *
                 </label>
@@ -246,6 +356,28 @@ export default function EditOutgoingLetterPage() {
                 />
                 {errors.subject && (
                   <p className="mt-1 text-sm text-red-600">{errors.subject.message}</p>
+                )}
+              </div>
+
+              {/* Sender */}
+              <div>
+                <label htmlFor="sender" className="block text-sm font-medium text-gray-700 mb-2">
+                  Pengirim *
+                </label>
+                <input
+                  type="text"
+                  id="sender"
+                  {...register('sender', { 
+                    required: 'Pengirim harus diisi',
+                    minLength: { value: 2, message: 'Nama pengirim minimal 2 karakter' }
+                  })}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
+                    errors.sender ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="Nama pengirim surat"
+                />
+                {errors.sender && (
+                  <p className="mt-1 text-sm text-red-600">{errors.sender.message}</p>
                 )}
               </div>
 
@@ -271,34 +403,39 @@ export default function EditOutgoingLetterPage() {
                 )}
               </div>
 
-              {/* Category */}
+              {/* Processor */}
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Kategori
+                <label htmlFor="processor" className="block text-sm font-medium text-gray-700 mb-2">
+                  Pengolah *
                 </label>
-                <select
-                  id="category"
-                  {...register('category')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                >
-                  <option value="GENERAL">Umum</option>
-                  <option value="INVITATION">Undangan</option>
-                  <option value="OFFICIAL">Resmi</option>
-                  <option value="ANNOUNCEMENT">Pengumuman</option>
-                </select>
+                <input
+                  type="text"
+                  id="processor"
+                  {...register('processor', { 
+                    required: 'Pengolah harus diisi',
+                    minLength: { value: 2, message: 'Nama pengolah minimal 2 karakter' }
+                  })}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
+                    errors.processor ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="Nama pengolah surat"
+                />
+                {errors.processor && (
+                  <p className="mt-1 text-sm text-red-600">{errors.processor.message}</p>
+                )}
               </div>
 
-              {/* Description */}
-              <div className="md:col-span-2">
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                  Deskripsi/Catatan
+              {/* Notes */}
+              <div className="md:col-span-3">
+                <label htmlFor="note" className="block text-sm font-medium text-gray-700 mb-2">
+                  Catatan
                 </label>
                 <textarea
-                  id="description"
+                  id="note"
                   rows={3}
-                  {...register('description')}
+                  {...register('note')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors resize-none"
-                  placeholder="Tambahkan deskripsi atau catatan tambahan (opsional)"
+                  placeholder="Tambahkan catatan tambahan (opsional)"
                 />
               </div>
             </div>
@@ -330,12 +467,31 @@ export default function EditOutgoingLetterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
                   <div>
                     <label htmlFor="eventDate" className="block text-sm font-medium text-gray-700 mb-2">
-                      Tanggal Acara
+                      Tanggal Acara *
                     </label>
                     <input
                       type="date"
                       id="eventDate"
-                      {...register('eventDate')}
+                      {...register('eventDate', {
+                        required: isInvitation ? 'Tanggal acara harus diisi untuk undangan' : false
+                      })}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
+                        errors.eventDate ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.eventDate && (
+                      <p className="mt-1 text-sm text-red-600">{errors.eventDate.message}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="eventTime" className="block text-sm font-medium text-gray-700 mb-2">
+                      Waktu Acara
+                    </label>
+                    <input
+                      type="time"
+                      id="eventTime"
+                      {...register('eventTime')}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                     />
                   </div>
@@ -350,6 +506,19 @@ export default function EditOutgoingLetterPage() {
                       {...register('eventLocation')}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                       placeholder="Lokasi atau tempat acara"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="eventNotes" className="block text-sm font-medium text-gray-700 mb-2">
+                      Catatan Acara
+                    </label>
+                    <textarea
+                      id="eventNotes"
+                      rows={3}
+                      {...register('eventNotes')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors resize-none"
+                      placeholder="Catatan tambahan untuk acara (opsional)"
                     />
                   </div>
                 </div>
