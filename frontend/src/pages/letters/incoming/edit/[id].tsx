@@ -75,11 +75,13 @@ export default function EditIncomingLetterPage() {
         eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : undefined,
         // Ensure boolean conversion
         isInvitation: Boolean(data.isInvitation),
-        // Handle optional fields
+        // Handle optional fields properly
         note: data.note || undefined,
         eventTime: data.eventTime || undefined,
         eventLocation: data.eventLocation || undefined,
         eventNotes: data.eventNotes || undefined,
+        // Ensure required fields for invitation
+        ...(data.isInvitation && !data.eventDate && { eventDate: undefined }),
         file: selectedFile || undefined,
       };
 
@@ -233,6 +235,37 @@ export default function EditIncomingLetterPage() {
                 )}
               </div>
 
+              {/* Letter Date */}
+              <div>
+                <label htmlFor="letterDate" className="block text-sm font-medium text-gray-700 mb-2">
+                  Tanggal Surat
+                </label>
+                <input
+                  type="date"
+                  id="letterDate"
+                  {...register('letterDate')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                />
+              </div>
+
+              {/* Letter Nature */}
+              <div>
+                <label htmlFor="letterNature" className="block text-sm font-medium text-gray-700 mb-2">
+                  Sifat Surat
+                </label>
+                <select
+                  id="letterNature"
+                  {...register('letterNature')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                >
+                  <option value="BIASA">Biasa</option>
+                  <option value="TERBATAS">Terbatas</option>
+                  <option value="RAHASIA">Rahasia</option>
+                  <option value="SANGAT_RAHASIA">Sangat Rahasia</option>
+                  <option value="PENTING">Penting</option>
+                </select>
+              </div>
+
               {/* Subject */}
               <div className="md:col-span-2">
                 <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
@@ -277,35 +310,61 @@ export default function EditIncomingLetterPage() {
                 )}
               </div>
 
-              {/* Category */}
+              {/* Recipient */}
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Kategori
+                <label htmlFor="recipient" className="block text-sm font-medium text-gray-700 mb-2">
+                  Penerima *
                 </label>
-                <select
-                  id="letterNature"
-                  {...register('letterNature')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
-                >
-                  <option value="BIASA">Biasa</option>
-                  <option value="TERBATAS">Terbatas</option>
-                  <option value="RAHASIA">Rahasia</option>
-                  <option value="SANGAT_RAHASIA">Sangat Rahasia</option>
-                  <option value="PENTING">Penting</option>
-                </select>
+                <input
+                  type="text"
+                  id="recipient"
+                  {...register('recipient', { 
+                    required: 'Penerima harus diisi',
+                    minLength: { value: 2, message: 'Nama penerima minimal 2 karakter' }
+                  })}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
+                    errors.recipient ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="Nama penerima surat"
+                />
+                {errors.recipient && (
+                  <p className="mt-1 text-sm text-red-600">{errors.recipient.message}</p>
+                )}
               </div>
 
-              {/* Description */}
+              {/* Processor */}
+              <div>
+                <label htmlFor="processor" className="block text-sm font-medium text-gray-700 mb-2">
+                  Pengolah *
+                </label>
+                <input
+                  type="text"
+                  id="processor"
+                  {...register('processor', { 
+                    required: 'Pengolah harus diisi',
+                    minLength: { value: 2, message: 'Nama pengolah minimal 2 karakter' }
+                  })}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
+                    errors.processor ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="Nama pengolah surat"
+                />
+                {errors.processor && (
+                  <p className="mt-1 text-sm text-red-600">{errors.processor.message}</p>
+                )}
+              </div>
+
+              {/* Notes */}
               <div className="md:col-span-2">
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                  Deskripsi/Catatan
+                <label htmlFor="note" className="block text-sm font-medium text-gray-700 mb-2">
+                  Catatan
                 </label>
                 <textarea
-                  id="description"
+                  id="note"
                   rows={3}
-                  {...register('description')}
+                  {...register('note')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors resize-none"
-                  placeholder="Tambahkan deskripsi atau catatan tambahan (opsional)"
+                  placeholder="Tambahkan catatan tambahan (opsional)"
                 />
               </div>
             </div>
@@ -337,12 +396,31 @@ export default function EditIncomingLetterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
                   <div>
                     <label htmlFor="eventDate" className="block text-sm font-medium text-gray-700 mb-2">
-                      Tanggal Acara
+                      Tanggal Acara *
                     </label>
                     <input
                       type="date"
                       id="eventDate"
-                      {...register('eventDate')}
+                      {...register('eventDate', {
+                        required: isInvitation ? 'Tanggal acara harus diisi untuk undangan' : false
+                      })}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors ${
+                        errors.eventDate ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.eventDate && (
+                      <p className="mt-1 text-sm text-red-600">{errors.eventDate.message}</p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="eventTime" className="block text-sm font-medium text-gray-700 mb-2">
+                      Waktu Acara
+                    </label>
+                    <input
+                      type="time"
+                      id="eventTime"
+                      {...register('eventTime')}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                     />
                   </div>
@@ -357,6 +435,19 @@ export default function EditIncomingLetterPage() {
                       {...register('eventLocation')}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
                       placeholder="Lokasi atau tempat acara"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="eventNotes" className="block text-sm font-medium text-gray-700 mb-2">
+                      Catatan Acara
+                    </label>
+                    <textarea
+                      id="eventNotes"
+                      rows={3}
+                      {...register('eventNotes')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors resize-none"
+                      placeholder="Catatan tambahan untuk acara (opsional)"
                     />
                   </div>
                 </div>
