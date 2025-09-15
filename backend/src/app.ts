@@ -10,6 +10,7 @@ import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import incomingLetterRoutes from './routes/incomingLetter.routes';
 import outgoingLetterRoutes from './routes/outgoingLetter.routes';
+import dispositionRoutes from './routes/disposition.routes';
 import notificationRoutes from './routes/notification.routes';
 import calendarRoutes from './routes/calendar.routes';
 import fileRoutes from './routes/file.routes';
@@ -54,6 +55,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/incoming-letters', incomingLetterRoutes);
 app.use('/api/outgoing-letters', outgoingLetterRoutes);
+app.use('/api/dispositions', dispositionRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/files', fileRoutes);
@@ -81,7 +83,7 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

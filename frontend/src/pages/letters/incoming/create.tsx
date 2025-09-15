@@ -39,14 +39,15 @@ export default function CreateIncomingLetterPage() {
         ...data,
         // Ensure dates are properly formatted as ISO strings
         receivedDate: new Date(data.receivedDate).toISOString(),
+        letterDate: data.letterDate ? new Date(data.letterDate).toISOString() : undefined,
         eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : undefined,
         // Ensure boolean conversion
         isInvitation: Boolean(data.isInvitation),
         // Handle optional fields
-        description: data.description || undefined,
+        note: data.note || undefined,
+        eventTime: data.eventTime || undefined,
         eventLocation: data.eventLocation || undefined,
-        // Set default category if not provided
-        category: data.category || 'GENERAL',
+        eventNotes: data.eventNotes || undefined,
         file: selectedFile || undefined,
       };
 
@@ -131,17 +132,29 @@ export default function CreateIncomingLetterPage() {
 
               <div className="form-group">
                 <label className="form-label">
-                  Kategori
+                  Tanggal Surat
+                </label>
+                <input
+                  {...register('letterDate')}
+                  type="date"
+                  className="input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  Sifat Surat
                 </label>
                 <select
-                  {...register('category')}
+                  {...register('letterNature')}
                   className="input"
-                  defaultValue="GENERAL"
+                  defaultValue="BIASA"
                 >
-                  <option value="GENERAL">Umum</option>
-                  <option value="INVITATION">Undangan</option>
-                  <option value="OFFICIAL">Resmi</option>
-                  <option value="ANNOUNCEMENT">Pengumuman</option>
+                  <option value="BIASA">Biasa</option>
+                  <option value="TERBATAS">Terbatas</option>
+                  <option value="RAHASIA">Rahasia</option>
+                  <option value="SANGAT_RAHASIA">Sangat Rahasia</option>
+                  <option value="PENTING">Penting</option>
                 </select>
               </div>
 
@@ -183,6 +196,42 @@ export default function CreateIncomingLetterPage() {
 
               <div className="form-group">
                 <label className="form-label form-label-required">
+                  Penerima
+                </label>
+                <input
+                  {...register('recipient', { 
+                    required: 'Penerima wajib diisi',
+                    minLength: { value: 2, message: 'Nama penerima minimal 2 karakter' }
+                  })}
+                  type="text"
+                  className={`input ${errors.recipient ? 'input-error' : ''}`}
+                  placeholder="Nama penerima atau instansi"
+                />
+                {errors.recipient && (
+                  <p className="form-error">{errors.recipient.message}</p>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label form-label-required">
+                  Pengolah
+                </label>
+                <input
+                  {...register('processor', { 
+                    required: 'Pengolah wajib diisi',
+                    minLength: { value: 2, message: 'Nama pengolah minimal 2 karakter' }
+                  })}
+                  type="text"
+                  className={`input ${errors.processor ? 'input-error' : ''}`}
+                  placeholder="Nama pengolah"
+                />
+                {errors.processor && (
+                  <p className="form-error">{errors.processor.message}</p>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label form-label-required">
                   Tanggal Diterima
                 </label>
                 <input
@@ -208,13 +257,13 @@ export default function CreateIncomingLetterPage() {
 
               <div className="md:col-span-2 form-group">
                 <label className="form-label">
-                  Deskripsi
+                  Keterangan
                 </label>
                 <textarea
-                  {...register('description')}
+                  {...register('note')}
                   rows={3}
                   className="input"
-                  placeholder="Masukkan deskripsi tambahan (opsional)"
+                  placeholder="Masukkan keterangan tambahan (opsional)"
                 />
               </div>
             </div>
@@ -243,7 +292,7 @@ export default function CreateIncomingLetterPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="form-group">
                     <label className="form-label">
-                      Tanggal & Waktu Acara
+                      Tanggal Acara
                     </label>
                     <input
                       {...register('eventDate', {
@@ -261,13 +310,26 @@ export default function CreateIncomingLetterPage() {
                           return true;
                         }
                       })}
-                      type="datetime-local"
+                      type="date"
                       className={`input ${errors.eventDate ? 'input-error' : ''}`}
                     />
                     {errors.eventDate && (
                       <p className="form-error">{errors.eventDate.message}</p>
                     )}
                   </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">
+                      Waktu Acara
+                    </label>
+                    <input
+                      {...register('eventTime')}
+                      type="time"
+                      className="input"
+                      placeholder="Contoh: 14:00"
+                    />
+                  </div>
+                  
                   <div className="form-group">
                     <label className="form-label">
                       Lokasi Acara
@@ -277,6 +339,18 @@ export default function CreateIncomingLetterPage() {
                       type="text"
                       className="input"
                       placeholder="Masukkan lokasi acara"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">
+                      Catatan Acara
+                    </label>
+                    <textarea
+                      {...register('eventNotes')}
+                      rows={3}
+                      className="input"
+                      placeholder="Masukkan catatan tambahan untuk acara"
                     />
                   </div>
                 </div>
