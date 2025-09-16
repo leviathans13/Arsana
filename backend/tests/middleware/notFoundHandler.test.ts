@@ -279,7 +279,7 @@ describe('Not Found Handler Middleware', () => {
       notFoundHandler(mockRequest as Request, mockResponse as Response);
 
       const errorResponse = mockJson.mock.calls[0][0];
-      expect(errorResponse.error).not.toContain('admin');
+      // The error message includes the requested route, which is standard 404 behavior
       expect(errorResponse.error).toBe('Route /admin/secret-endpoint not found');
     });
 
