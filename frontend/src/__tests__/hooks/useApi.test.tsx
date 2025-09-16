@@ -18,18 +18,20 @@ import {
 } from '../../hooks/useApi';
 
 // Mock the API client
+const mockApiClient = {
+  getIncomingLetters: jest.fn(),
+  getIncomingLetterById: jest.fn(),
+  createIncomingLetter: jest.fn(),
+  updateIncomingLetter: jest.fn(),
+  deleteIncomingLetter: jest.fn(),
+  getOutgoingLetters: jest.fn(),
+  getNotifications: jest.fn(),
+  getCalendarEvents: jest.fn(),
+  getUpcomingEvents: jest.fn(),
+};
+
 jest.mock('../../lib/api', () => ({
-  default: {
-    getIncomingLetters: jest.fn(),
-    getIncomingLetterById: jest.fn(),
-    createIncomingLetter: jest.fn(),
-    updateIncomingLetter: jest.fn(),
-    deleteIncomingLetter: jest.fn(),
-    getOutgoingLetters: jest.fn(),
-    getNotifications: jest.fn(),
-    getCalendarEvents: jest.fn(),
-    getUpcomingEvents: jest.fn(),
-  },
+  default: mockApiClient,
 }));
 
 // Mock react-hot-toast
@@ -56,7 +58,7 @@ jest.mock('../../lib/utils', () => ({
 import apiClient from '../../lib/api';
 import { toast } from 'react-hot-toast';
 
-const mockApiClient = apiClient as jest.Mocked<typeof apiClient>;
+// Use the already defined mockApiClient
 
 // Test wrapper with QueryClient
 const createWrapper = () => {

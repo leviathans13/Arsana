@@ -1,32 +1,40 @@
 import { Request, Response } from 'express';
-import { login, register } from '../../src/controllers/auth.controller';
 
-// Mock the entire Prisma module
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    user: {
-      findUnique: jest.fn(),
-      create: jest.fn(),
-    },
-  })),
-}));
+// Mock the auth controller module to allow proper mocking
+const mockPrisma = {
+  user: {
+    findUnique: jest.fn(),
+    create: jest.fn(),
+  },
+};
 
-// Mock the auth utils
-jest.mock('../../src/utils/auth', () => ({
+const mockAuthUtils = {
   generateToken: jest.fn(),
   hashPassword: jest.fn(),
   comparePassword: jest.fn(),
+};
+
+// Mock the entire auth controller module 
+jest.mock('../../src/controllers/auth.controller', () => {
+  const originalModule = jest.requireActual('../../src/controllers/auth.controller');
+  return {
+    ...originalModule,
+  };
+});
+
+// Mock the Prisma client
+jest.mock('@prisma/client', () => ({
+  PrismaClient: jest.fn().mockImplementation(() => mockPrisma),
 }));
 
-import { PrismaClient } from '@prisma/client';
-import * as authUtils from '../../src/utils/auth';
+// Mock the auth utils
+jest.mock('../../src/utils/auth', () => mockAuthUtils);
 
-const mockAuthUtils = authUtils as jest.Mocked<typeof authUtils>;
+import { login, register } from '../../src/controllers/auth.controller';
 
 describe('Auth Controller', () => {
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
-  let mockPrisma: any;
 
   beforeEach(() => {
     // Reset all mocks
@@ -41,10 +49,6 @@ describe('Auth Controller', () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
     };
-
-    // Get the mocked Prisma instance
-    const MockedPrismaClient = PrismaClient as jest.MockedClass<typeof PrismaClient>;
-    mockPrisma = new MockedPrismaClient();
   });
 
   describe('login', () => {
