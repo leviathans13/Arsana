@@ -37,15 +37,12 @@ export default function CreateOutgoingLetterPage() {
       const formData = {
         ...data,
         // Ensure dates are properly formatted as ISO strings
-        sentDate: new Date(data.sentDate).toISOString(),
+        letterDate: new Date(data.letterDate).toISOString(),
         eventDate: data.eventDate ? new Date(data.eventDate).toISOString() : undefined,
         // Ensure boolean conversion
         isInvitation: Boolean(data.isInvitation),
         // Handle optional fields
-        description: data.description || undefined,
         eventLocation: data.eventLocation || undefined,
-        // Set default category if not provided
-        category: data.category || 'GENERAL',
         file: selectedFile || undefined,
       };
 
@@ -124,21 +121,6 @@ export default function CreateOutgoingLetterPage() {
                 )}
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Kategori
-                </label>
-                <select
-                  {...register('category')}
-                  className="input"
-                >
-                  <option value="GENERAL">Umum</option>
-                  <option value="INVITATION">Undangan</option>
-                  <option value="OFFICIAL">Resmi</option>
-                  <option value="ANNOUNCEMENT">Pengumuman</option>
-                </select>
-              </div>
-
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Subjek <span className="text-red-500">*</span>
@@ -174,7 +156,7 @@ export default function CreateOutgoingLetterPage() {
                   Tanggal Dikirim <span className="text-red-500">*</span>
                 </label>
                 <input
-                  {...register('sentDate', { 
+                  {...register('letterDate', { 
                     required: 'Tanggal dikirim wajib diisi',
                     validate: (value) => {
                       const date = new Date(value);
@@ -189,20 +171,20 @@ export default function CreateOutgoingLetterPage() {
                   className="input"
                   max={new Date().toISOString().slice(0, 16)}
                 />
-                {errors.sentDate && (
-                  <p className="mt-1 text-sm text-red-600">{errors.sentDate.message}</p>
+                {errors.letterDate && (
+                  <p className="mt-1 text-sm text-red-600">{errors.letterDate.message}</p>
                 )}
               </div>
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Deskripsi
+                  Catatan
                 </label>
                 <textarea
-                  {...register('description')}
+                  {...register('note')}
                   rows={3}
                   className="input"
-                  placeholder="Masukkan deskripsi tambahan (opsional)"
+                  placeholder="Masukkan catatan tambahan (opsional)"
                 />
               </div>
             </div>

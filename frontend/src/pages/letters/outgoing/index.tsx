@@ -16,18 +16,20 @@ import Layout from '@/components/Layout/Layout';
 import { formatDate } from '@/lib/utils';
 import { OutgoingLetter, LetterCategory } from '@/types';
 
-const categoryColors = {
-  GENERAL: 'bg-gray-100 text-gray-800',
-  INVITATION: 'bg-purple-100 text-purple-800',
-  OFFICIAL: 'bg-blue-100 text-blue-800',
-  ANNOUNCEMENT: 'bg-green-100 text-green-800',
+const natureColors = {
+  BIASA: 'bg-gray-100 text-gray-800',
+  TERBATAS: 'bg-yellow-100 text-yellow-800',
+  RAHASIA: 'bg-red-100 text-red-800',
+  SANGAT_RAHASIA: 'bg-red-200 text-red-900',
+  PENTING: 'bg-blue-100 text-blue-800',
 };
 
-const categoryLabels = {
-  GENERAL: 'Umum',
-  INVITATION: 'Undangan',
-  OFFICIAL: 'Resmi',
-  ANNOUNCEMENT: 'Pengumuman',
+const natureLabels = {
+  BIASA: 'Biasa',
+  TERBATAS: 'Terbatas', 
+  RAHASIA: 'Rahasia',
+  SANGAT_RAHASIA: 'Sangat Rahasia',
+  PENTING: 'Penting',
 };
 
 export default function OutgoingLettersPage() {
@@ -196,8 +198,8 @@ export default function OutgoingLettersPage() {
                           {letter.recipient}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`badge ${categoryColors[letter.category]}`}>
-                            {categoryLabels[letter.category]}
+                          <span className={`badge ${natureColors[letter.letterNature]}`}>
+                            {natureLabels[letter.letterNature]}
                           </span>
                           {letter.isInvitation && (
                             <span className="badge badge-primary ml-1">
@@ -206,7 +208,7 @@ export default function OutgoingLettersPage() {
                           )}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {formatDate(letter.sentDate)}
+                          {formatDate(letter.letterDate)}
                         </td>
                         <td className="px-6 py-4">
                           {letter.fileName ? (
