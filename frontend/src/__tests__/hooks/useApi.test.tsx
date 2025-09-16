@@ -5,20 +5,9 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ReactNode } from 'react';
-import {
-  useIncomingLetters,
-  useIncomingLetter,
-  useCreateIncomingLetter,
-  useUpdateIncomingLetter,
-  useDeleteIncomingLetter,
-  useOutgoingLetters,
-  useNotifications,
-  useCalendarEvents,
-  useUpcomingEvents
-} from '../../hooks/useApi';
 
-// Mock the API client
-jest.mock('../../lib/api', () => ({
+// Mock the API client before importing hooks
+jest.mock('@/lib/api', () => ({
   default: {
     getIncomingLetters: jest.fn(),
     getIncomingLetterById: jest.fn(),
@@ -41,7 +30,7 @@ jest.mock('react-hot-toast', () => ({
 }));
 
 // Mock the utils
-jest.mock('../../lib/utils', () => ({
+jest.mock('@/lib/utils', () => ({
   createFormData: jest.fn((data) => {
     const formData = new FormData();
     Object.keys(data).forEach(key => {
@@ -53,7 +42,19 @@ jest.mock('../../lib/utils', () => ({
   }),
 }));
 
-import apiClient from '../../lib/api';
+import {
+  useIncomingLetters,
+  useIncomingLetter,
+  useCreateIncomingLetter,
+  useUpdateIncomingLetter,
+  useDeleteIncomingLetter,
+  useOutgoingLetters,
+  useNotifications,
+  useCalendarEvents,
+  useUpcomingEvents
+} from '../../hooks/useApi';
+
+import apiClient from '@/lib/api';
 import { toast } from 'react-hot-toast';
 
 const mockApiClient = apiClient as jest.Mocked<typeof apiClient>;

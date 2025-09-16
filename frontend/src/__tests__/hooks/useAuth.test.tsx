@@ -20,7 +20,7 @@ jest.mock('react-hot-toast', () => ({
   },
 }));
 
-jest.mock('../../lib/api', () => ({
+jest.mock('@/lib/api', () => ({
   default: {
     getCurrentUser: jest.fn(),
     login: jest.fn(),
@@ -30,7 +30,7 @@ jest.mock('../../lib/api', () => ({
 
 import Cookies from 'js-cookie';
 import { toast } from 'react-hot-toast';
-import apiClient from '../../lib/api';
+import apiClient from '@/lib/api';
 
 const mockCookies = Cookies as jest.Mocked<typeof Cookies>;
 const mockToast = toast as jest.Mocked<typeof toast>;
@@ -338,7 +338,7 @@ describe('useAuth Hook', () => {
       expect(result.current.user).toBe(null);
       expect(result.current.isAuthenticated).toBe(false);
       expect(mockCookies.remove).toHaveBeenCalledWith('authToken');
-      expect(mockToast.success).toHaveBeenCalledWith('Logout berhasil!');
+      expect(mockToast.success).toHaveBeenCalledWith('Logged out successfully');
     });
 
     it('should handle logout when not logged in', () => {
@@ -351,7 +351,7 @@ describe('useAuth Hook', () => {
       expect(result.current.user).toBe(null);
       expect(result.current.isAuthenticated).toBe(false);
       expect(mockCookies.remove).toHaveBeenCalledWith('authToken');
-      expect(mockToast.success).toHaveBeenCalledWith('Logout berhasil!');
+      expect(mockToast.success).toHaveBeenCalledWith('Logged out successfully');
     });
   });
 

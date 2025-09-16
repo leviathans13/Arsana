@@ -21,18 +21,18 @@ describe('Logger Utils', () => {
 
   describe('Logging Methods', () => {
     it('should have all standard logging methods on main logger', () => {
-      const methods = ['error', 'warn', 'info', 'debug'];
+      const methods = ['error', 'warn', 'info', 'debug'] as const;
       methods.forEach(method => {
-        expect(logger[method]).toBeDefined();
-        expect(typeof logger[method]).toBe('function');
+        expect((logger as any)[method]).toBeDefined();
+        expect(typeof (logger as any)[method]).toBe('function');
       });
     });
 
     it('should have all standard logging methods on dev logger', () => {
-      const methods = ['error', 'warn', 'info', 'debug'];
+      const methods = ['error', 'warn', 'info', 'debug'] as const;
       methods.forEach(method => {
-        expect(devLogger[method]).toBeDefined();
-        expect(typeof devLogger[method]).toBe('function');
+        expect((devLogger as any)[method]).toBeDefined();
+        expect(typeof (devLogger as any)[method]).toBe('function');
       });
     });
   });

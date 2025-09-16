@@ -3,25 +3,27 @@
  */
 
 // Mock axios before importing anything else
-const mockInstance = {
-  get: jest.fn(),
-  post: jest.fn(),
-  put: jest.fn(),
-  delete: jest.fn(),
-  interceptors: {
-    request: {
-      use: jest.fn(),
+jest.mock('axios', () => {
+  const mockInstance = {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+    interceptors: {
+      request: {
+        use: jest.fn(),
+      },
+      response: {
+        use: jest.fn(),
+      },
     },
-    response: {
-      use: jest.fn(),
-    },
-  },
-};
-
-// Mock axios
-jest.mock('axios', () => ({
-  create: jest.fn(() => mockInstance),
-}));
+  };
+  
+  return {
+    create: jest.fn(() => mockInstance),
+    __mockInstance: mockInstance, // Export mock instance for tests
+  };
+});
 
 // Mock react-hot-toast
 jest.mock('react-hot-toast', () => ({
@@ -41,7 +43,8 @@ jest.mock('js-cookie', () => ({
 import axios from 'axios';
 import apiClient from '../../lib/api';
 
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+const mockedAxios = axios as jest.Mocked<typeof axios> & { __mockInstance: any };
+const mockInstance = mockedAxios.__mockInstance;
 
 // Mock window.location
 delete (window as any).location;
