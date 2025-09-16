@@ -1,18 +1,22 @@
 import { Response } from 'express';
-import { getCalendarEvents, getUpcomingEvents } from '../../src/controllers/calendar.controller';
 import { AuthenticatedRequest } from '../../src/middleware/auth';
+
+// Create mock prisma
+const mockPrisma = {
+  incomingLetter: {
+    findMany: jest.fn(),
+  },
+  outgoingLetter: {
+    findMany: jest.fn(),
+  },
+};
 
 // Mock Prisma
 jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    incomingLetter: {
-      findMany: jest.fn(),
-    },
-    outgoingLetter: {
-      findMany: jest.fn(),
-    },
-  })),
+  PrismaClient: jest.fn().mockImplementation(() => mockPrisma),
 }));
+
+import { getCalendarEvents, getUpcomingEvents } from '../../src/controllers/calendar.controller';
 
 describe('Calendar Controller', () => {
   let mockRequest: Partial<AuthenticatedRequest>;
@@ -64,12 +68,9 @@ describe('Calendar Controller', () => {
         }
       ];
 
-      // Mock Prisma calls - need to get the actual instance
-      const { PrismaClient } = require('@prisma/client');
-      const mockPrismaInstance = new PrismaClient();
-      
-      (mockPrismaInstance.incomingLetter.findMany as jest.Mock).mockResolvedValue(mockIncomingLetters);
-      (mockPrismaInstance.outgoingLetter.findMany as jest.Mock).mockResolvedValue(mockOutgoingLetters);
+      // Mock Prisma calls
+      mockPrisma.incomingLetter.findMany.mockResolvedValue(mockIncomingLetters);
+      mockPrisma.outgoingLetter.findMany.mockResolvedValue(mockOutgoingLetters);
 
       await getCalendarEvents(mockRequest as AuthenticatedRequest, mockResponse as Response);
 
@@ -104,10 +105,7 @@ describe('Calendar Controller', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      const { PrismaClient } = require('@prisma/client');
-      const mockPrismaInstance = new PrismaClient();
-      
-      (mockPrismaInstance.incomingLetter.findMany as jest.Mock).mockRejectedValue(new Error('Database error'));
+      mockPrisma.incomingLetter.findMany.mockRejectedValue(new Error('Database error'));
 
       await getCalendarEvents(mockRequest as AuthenticatedRequest, mockResponse as Response);
 
@@ -133,11 +131,8 @@ describe('Calendar Controller', () => {
         }
       ];
 
-      const { PrismaClient } = require('@prisma/client');
-      const mockPrismaInstance = new PrismaClient();
-      
-      (mockPrismaInstance.incomingLetter.findMany as jest.Mock).mockResolvedValue(mockUpcomingLetters);
-      (mockPrismaInstance.outgoingLetter.findMany as jest.Mock).mockResolvedValue([]);
+      mockPrisma.incomingLetter.findMany.mockResolvedValue(mockUpcomingLetters);
+      mockPrisma.outgoingLetter.findMany.mockResolvedValue([]);
 
       await getUpcomingEvents(mockRequest as AuthenticatedRequest, mockResponse as Response);
 
@@ -186,11 +181,8 @@ describe('Calendar Controller', () => {
         }
       ];
 
-      const { PrismaClient } = require('@prisma/client');
-      const mockPrismaInstance = new PrismaClient();
-      
-      (mockPrismaInstance.incomingLetter.findMany as jest.Mock).mockResolvedValue(mockEvents);
-      (mockPrismaInstance.outgoingLetter.findMany as jest.Mock).mockResolvedValue([]);
+      mockPrisma.incomingLetter.findMany.mockResolvedValue(mockEvents);
+      mockPrisma.outgoingLetter.findMany.mockResolvedValue([]);
 
       await getUpcomingEvents(mockRequest as AuthenticatedRequest, mockResponse as Response);
 

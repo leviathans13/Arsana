@@ -5,6 +5,43 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { ReactNode } from 'react';
+
+// Mock the API client before importing hooks
+jest.mock('@/lib/api', () => ({
+  default: {
+    getIncomingLetters: jest.fn(),
+    getIncomingLetterById: jest.fn(),
+    createIncomingLetter: jest.fn(),
+    updateIncomingLetter: jest.fn(),
+    deleteIncomingLetter: jest.fn(),
+    getOutgoingLetters: jest.fn(),
+    getNotifications: jest.fn(),
+    getCalendarEvents: jest.fn(),
+    getUpcomingEvents: jest.fn(),
+  },
+}));
+
+// Mock react-hot-toast
+jest.mock('react-hot-toast', () => ({
+  toast: {
+    success: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+// Mock the utils
+jest.mock('@/lib/utils', () => ({
+  createFormData: jest.fn((data) => {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+      if (data[key] !== null && data[key] !== undefined) {
+        formData.append(key, data[key]);
+      }
+    });
+    return formData;
+  }),
+}));
+
 import {
   useIncomingLetters,
   useIncomingLetter,
@@ -17,48 +54,10 @@ import {
   useUpcomingEvents
 } from '../../hooks/useApi';
 
-// Mock the API client
-const mockApiClient = {
-  getIncomingLetters: jest.fn(),
-  getIncomingLetterById: jest.fn(),
-  createIncomingLetter: jest.fn(),
-  updateIncomingLetter: jest.fn(),
-  deleteIncomingLetter: jest.fn(),
-  getOutgoingLetters: jest.fn(),
-  getNotifications: jest.fn(),
-  getCalendarEvents: jest.fn(),
-  getUpcomingEvents: jest.fn(),
-};
-
-jest.mock('../../lib/api', () => ({
-  default: mockApiClient,
-}));
-
-// Mock react-hot-toast
-jest.mock('react-hot-toast', () => ({
-  toast: {
-    success: jest.fn(),
-    error: jest.fn(),
-  },
-}));
-
-// Mock the utils
-jest.mock('../../lib/utils', () => ({
-  createFormData: jest.fn((data) => {
-    const formData = new FormData();
-    Object.keys(data).forEach(key => {
-      if (data[key] !== null && data[key] !== undefined) {
-        formData.append(key, data[key]);
-      }
-    });
-    return formData;
-  }),
-}));
-
-import apiClient from '../../lib/api';
+import apiClient from '@/lib/api';
 import { toast } from 'react-hot-toast';
 
-// Use the already defined mockApiClient
+const mockApiClient = apiClient as jest.Mocked<typeof apiClient>;
 
 // Test wrapper with QueryClient
 const createWrapper = () => {
