@@ -19,9 +19,9 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const timestamp = Date.now();
     const sanitizedOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-    cb(null, `outgoing-${uniqueSuffix}-${sanitizedOriginalName}`);
+    cb(null, `${timestamp}-${sanitizedOriginalName}`);
   }
 });
 
@@ -387,6 +387,41 @@ export const getOutgoingLetters = async (req: AuthenticatedRequest, res: Respons
     });
   } catch (error) {
     console.error('Get outgoing letters error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const showEditForm = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const letter = await prisma.outgoingLetter.findUnique({
+      where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    if (!letter) {
+      res.status(404).json({ error: 'Data not found' });
+      return;
+    }
+
+    // Check if user owns the letter or is admin
+    if (letter.userId !== req.user!.userId && req.user!.role !== 'ADMIN') {
+      res.status(403).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    res.json(letter);
+  } catch (error) {
+    console.error('Show edit form error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

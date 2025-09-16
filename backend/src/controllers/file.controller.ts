@@ -120,10 +120,10 @@ export const downloadFile = async (req: AuthenticatedRequest, res: Response): Pr
     const isViewable = mimeType.startsWith('image/') || mimeType === 'application/pdf';
 
     // Set proper headers
-    const fileName = letter.fileName;
+    const originalFileName = letter.fileName;
     const disposition = req.query.preview && isViewable ? 'inline' : 'attachment';
     
-    res.setHeader('Content-Disposition', `${disposition}; filename="${fileName}"`);
+    res.setHeader('Content-Disposition', `${disposition}; filename="${originalFileName}"`);
     res.setHeader('Content-Type', mimeType);
     res.setHeader('Content-Length', fileSize.toString());
     
@@ -133,7 +133,7 @@ export const downloadFile = async (req: AuthenticatedRequest, res: Response): Pr
     res.setHeader('Cache-Control', 'private, no-cache');
 
     // Log the download
-    securityLogger.fileAccess(userId, fileName, 'download');
+    securityLogger.fileAccess(userId, originalFileName, 'download');
     
     // Create read stream and pipe to response
     const fileStream = fs.createReadStream(filePath);
@@ -148,7 +148,7 @@ export const downloadFile = async (req: AuthenticatedRequest, res: Response): Pr
 
     fileStream.on('end', () => {
       // Log successful download completion
-      console.log(`File downloaded successfully: ${fileName} by user ${userId}`);
+      console.log(`File downloaded successfully: ${originalFileName} by user ${userId}`);
     });
 
   } catch (error) {

@@ -4,6 +4,7 @@ import {
   createOutgoingLetter,
   getOutgoingLetters,
   getOutgoingLetterById,
+  showEditForm,
   updateOutgoingLetter,
   deleteOutgoingLetter
 } from '../controllers/outgoingLetter.controller';
@@ -16,6 +17,7 @@ router.use(authenticate);
 
 router.post('/', upload.single('file'), createOutgoingLetter);
 router.get('/', getOutgoingLetters);
+router.get('/:id/edit', showEditForm);
 router.get('/:id', getOutgoingLetterById);
 router.put('/:id', upload.single('file'), updateOutgoingLetter);
 router.delete('/:id', deleteOutgoingLetter);
