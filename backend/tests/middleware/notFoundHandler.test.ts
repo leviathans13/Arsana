@@ -288,7 +288,7 @@ describe('Not Found Handler Middleware', () => {
 
       notFoundHandler(mockRequest as Request, mockResponse as Response);
 
-      const logCall = mockLogger.warn.mock.calls[0][1] as any;
+      const logCall = (mockLogger.warn.mock.calls[0] as unknown as [string, any])[1];
       expect(logCall?.request).not.toHaveProperty('body');
     });
   });

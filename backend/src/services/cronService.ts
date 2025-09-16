@@ -198,53 +198,57 @@ const checkOverdueInvitations = async () => {
 export const startCronJobs = () => {
   console.log('Starting cron jobs...');
 
-  // Check for upcoming events every day at 9 AM
-  cron.schedule('0 9 * * *', async () => {
-    console.log('Running upcoming events check...');
-    await checkUpcomingEvents();
-  });
+  try {
+    // Check for upcoming events every day at 9 AM
+    cron.schedule('0 9 * * *', async () => {
+      console.log('Running upcoming events check...');
+      await checkUpcomingEvents();
+    });
 
-  // Check for overdue invitations every day at 6 PM
-  cron.schedule('0 18 * * *', async () => {
-    console.log('Running overdue invitations check...');
-    await checkOverdueInvitations();
-  });
+    // Check for overdue invitations every day at 6 PM
+    cron.schedule('0 18 * * *', async () => {
+      console.log('Running overdue invitations check...');
+      await checkOverdueInvitations();
+    });
 
-  // Weekly summary notification (every Monday at 8 AM)
-  cron.schedule('0 8 * * 1', async () => {
-    console.log('Generating weekly summary...');
-    
-    const startOfWeek = new Date();
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1); // Monday
-    
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(endOfWeek.getDate() + 6); // Sunday
+    // Weekly summary notification (every Monday at 8 AM)
+    cron.schedule('0 8 * * 1', async () => {
+      console.log('Generating weekly summary...');
+      
+      const startOfWeek = new Date();
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1); // Monday
+      
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(endOfWeek.getDate() + 6); // Sunday
 
-    const weeklyStats = await Promise.all([
-      prisma.incomingLetter.count({
-        where: {
-          createdAt: {
-            gte: startOfWeek,
-            lte: endOfWeek
+      const weeklyStats = await Promise.all([
+        prisma.incomingLetter.count({
+          where: {
+            createdAt: {
+              gte: startOfWeek,
+              lte: endOfWeek
+            }
           }
-        }
-      }),
-      prisma.outgoingLetter.count({
-        where: {
-          createdAt: {
-            gte: startOfWeek,
-            lte: endOfWeek
+        }),
+        prisma.outgoingLetter.count({
+          where: {
+            createdAt: {
+              gte: startOfWeek,
+              lte: endOfWeek
+            }
           }
-        }
-      })
-    ]);
+        })
+      ]);
 
-    await createNotification(
-      'Weekly Summary',
-      `This week: ${weeklyStats[0]} incoming letters, ${weeklyStats[1]} outgoing letters processed.`,
-      'INFO'
-    );
-  });
+      await createNotification(
+        'Weekly Summary',
+        `This week: ${weeklyStats[0]} incoming letters, ${weeklyStats[1]} outgoing letters processed.`,
+        'INFO'
+      );
+    });
 
-  console.log('Cron jobs started successfully');
+    console.log('Cron jobs started successfully');
+  } catch (error) {
+    console.error('Error starting cron jobs:', error);
+  }
 };

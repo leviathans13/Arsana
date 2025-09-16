@@ -44,6 +44,9 @@ describe('Cron Service', () => {
     mockCron = require('node-cron');
     const { PrismaClient } = require('@prisma/client');
     mockPrisma = new PrismaClient();
+    
+    // Reset cron schedule mock to default behavior
+    mockCron.schedule.mockImplementation(() => ({}));
   });
 
   afterEach(() => {

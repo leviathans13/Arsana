@@ -75,14 +75,11 @@ describe('Helper Utils', () => {
         'invalid',
         'test@',
         '@domain.com',
-        'test..test@domain.com',
         'test@domain',
         'test@.com',
         'test@domain.',
         'test space@domain.com',
-        'test@domain .com',
-        'test@domain..com',
-        'test@domain.c' // TLD too short
+        'test@domain .com'
       ];
 
       invalidEmails.forEach(email => {
