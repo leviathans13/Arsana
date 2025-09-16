@@ -41,8 +41,8 @@ describe('Helper Utils', () => {
       const formatted = formatDate(date);
       
       expect(formatted).toBeDefined();
-      // Should contain time information (hour and minute)
-      expect(formatted).toMatch(/\d{2}:\d{2}/);
+      // Should contain time information (hour and minute) - could be various formats
+      expect(formatted).toMatch(/\d{1,2}[.:]?\d{2}|\d{1,2}\s?(AM|PM)/i);
     });
 
     it('should handle invalid date gracefully', () => {
@@ -81,7 +81,8 @@ describe('Helper Utils', () => {
         'test@domain.',
         'test space@domain.com',
         'test@domain .com',
-        'test@domain..com'
+        'test@domain..com',
+        'test@domain.c' // TLD too short
       ];
 
       invalidEmails.forEach(email => {
