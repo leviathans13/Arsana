@@ -83,7 +83,7 @@ export default function EditOutgoingLetterPage() {
         // Handle optional fields
         note: data.note || undefined,
         classificationCode: data.classificationCode || undefined,
-        serialNumber: data.serialNumber ? parseInt(data.serialNumber as string) : undefined,
+        serialNumber: data.serialNumber ? parseInt(String(data.serialNumber)) : undefined,
         eventTime: data.eventTime || undefined,
         eventLocation: data.eventLocation || undefined,
         eventNotes: data.eventNotes || undefined,
