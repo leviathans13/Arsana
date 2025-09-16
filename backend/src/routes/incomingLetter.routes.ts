@@ -6,6 +6,7 @@ import {
   getIncomingLetterById,
   updateIncomingLetter,
   deleteIncomingLetter,
+  downloadIncomingLetter,
   upload
 } from '../controllers/incomingLetter.controller';
 
@@ -16,6 +17,8 @@ router.use(authenticate);
 
 router.post('/', upload.single('file'), createIncomingLetter);
 router.get('/', getIncomingLetters);
+router.get('/edit/:id', getIncomingLetterById); // Route for edit form
+router.get('/download/:id', downloadIncomingLetter); // Route for file download
 router.get('/:id', getIncomingLetterById);
 router.put('/:id', upload.single('file'), updateIncomingLetter);
 router.delete('/:id', deleteIncomingLetter);

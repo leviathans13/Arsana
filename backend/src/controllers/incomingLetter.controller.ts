@@ -19,9 +19,9 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const timestamp = Date.now();
     const sanitizedOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-    cb(null, `incoming-${uniqueSuffix}-${sanitizedOriginalName}`);
+    cb(null, `${timestamp}-${sanitizedOriginalName}`);
   }
 });
 
@@ -505,5 +505,54 @@ export const deleteIncomingLetter = async (req: AuthenticatedRequest, res: Respo
   } catch (error) {
     console.error('Delete incoming letter error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const downloadIncomingLetter = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    // Find the letter
+    const letter = await prisma.incomingLetter.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        fileName: true,
+        filePath: true,
+        userId: true
+      }
+    });
+
+    if (!letter) {
+      res.status(404).json({ error: 'Letter not found' });
+      return;
+    }
+
+    // Check if there's a file attached
+    if (!letter.filePath || !letter.fileName) {
+      res.status(404).json({ error: 'No file attached to this letter' });
+      return;
+    }
+
+    // Check if file exists on disk
+    if (!fs.existsSync(letter.filePath)) {
+      res.status(404).json({ error: 'File not found on server' });
+      return;
+    }
+
+    // Send file with original filename
+    res.download(letter.filePath, letter.fileName, (err) => {
+      if (err) {
+        console.error('Download error:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Error downloading file' });
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Download incoming letter error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 };
